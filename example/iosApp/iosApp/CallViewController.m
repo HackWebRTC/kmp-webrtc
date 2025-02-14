@@ -34,12 +34,7 @@
 @import WebRTC;
 @import kmp_webrtc;
 
-@class CallViewController;
-
-@interface PcClientCallback : NSObject <Kmp_webrtcPeerConnectionClientCallback>
-
-- (instancetype)initWithVC:(CallViewController*)controller;
-
+@interface CallViewController () <Kmp_webrtcPeerConnectionClientCallback, CFAudioMixerDelegate>
 @end
 
 @implementation CallViewController {
@@ -47,19 +42,21 @@
     bool _isLandscape;
 
     Kmp_webrtcObjCPeerConnectionClientFactory* _pcClientFactory;
-    @public id<Kmp_webrtcPeerConnectionClient> _pcClient;
-    PcClientCallback* _pcClientCallback;
-    @public NSTimer* _statsTimer;
+    id<Kmp_webrtcPeerConnectionClient> _pcClient;
+    NSTimer* _statsTimer;
+    CFAudioMixer* _mixer;
 
     UIView* _rootLayout;
-    @public CFEAGLVideoView* _remoteRenderer;
+    CFEAGLVideoView* _remoteRenderer;
     CFEAGLVideoView* _localRenderer;
 
     UIButton* _leaveButton;
     UIButton* _recordButton;
-    @public UIButton* _switchCameraButton;
+    UIButton* _mixerButton;
+    UIButton* _switchCameraButton;
 
     bool _recording;
+    bool _mixingMusic;
     bool _videoEnabled;
 
     bool _sendLastFrame;
@@ -71,8 +68,6 @@
     if (self = [super init]) {
         _settingsModel = [[ARDSettingsModel alloc] init];
         _isLandscape = isLandscape;
-
-        _pcClientCallback = [[PcClientCallback alloc] initWithVC:self];
     }
     return self;
 }
@@ -108,14 +103,15 @@
         .bottomSpaceToView(self.view, 30)
         .leftSpaceToView(self.view, 10);
 
-    _switchCameraButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [_switchCameraButton setTitle:@"FRONT" forState:UIControlStateNormal];
-    _switchCameraButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
-    [_switchCameraButton addTarget:self
-                            action:@selector(onSwitchCamera:)
-                  forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:_switchCameraButton];
-    _switchCameraButton.sd_layout.widthIs(80)
+    _mixerButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [_mixerButton setTitle:_mixingMusic ? @"stop mixer" : @"start mixer"
+                   forState:UIControlStateNormal];
+    _mixerButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
+    [_mixerButton addTarget:self
+                      action:@selector(onMixer:)
+            forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:_mixerButton];
+    _mixerButton.sd_layout.widthIs(150)
         .heightIs(20)
         .bottomEqualToView(_recordButton)
         .leftSpaceToView(_recordButton, 10);
@@ -130,7 +126,19 @@
     _leaveButton.sd_layout.widthIs(80)
         .heightIs(20)
         .bottomEqualToView(_recordButton)
-        .leftSpaceToView(_switchCameraButton, 10);
+        .leftSpaceToView(_mixerButton, 10);
+
+    _switchCameraButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [_switchCameraButton setTitle:@"FRONT" forState:UIControlStateNormal];
+    _switchCameraButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
+    [_switchCameraButton addTarget:self
+                            action:@selector(onSwitchCamera:)
+                  forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:_switchCameraButton];
+    _switchCameraButton.sd_layout.widthIs(80)
+        .heightIs(20)
+        .leftEqualToView(_recordButton)
+        .bottomSpaceToView(_recordButton, 20);
 
     UIButton* videoButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [videoButton setTitle:@"Video" forState:UIControlStateNormal];
@@ -141,8 +149,8 @@
     [self.view addSubview:videoButton];
     videoButton.sd_layout.widthIs(80)
         .heightIs(20)
-        .bottomSpaceToView(_recordButton, 20)
-        .leftSpaceToView(self.view, 10);
+        .bottomEqualToView(_switchCameraButton)
+        .leftSpaceToView(_switchCameraButton, 10);
 
     UIButton* sendLastFrameButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [sendLastFrameButton setTitle:@"SLF" forState:UIControlStateNormal];
@@ -153,7 +161,7 @@
     [self.view addSubview:sendLastFrameButton];
     sendLastFrameButton.sd_layout.widthIs(80)
         .heightIs(20)
-        .bottomEqualToView(videoButton)
+        .bottomEqualToView(_switchCameraButton)
         .leftSpaceToView(videoButton, 10);
 
     _localRenderer =
@@ -228,7 +236,7 @@
                                                           hasVideo:YES
                                                    videoMaxBitrate:[[_settingsModel currentMaxBitrateSettingFromStore] intValue]
                                                  videoMaxFrameRate:30
-                                                          callback:_pcClientCallback];
+                                                          callback:self];
 
     // 7. create pc
     NSArray* iceServers = [NSArray array];
@@ -272,6 +280,54 @@
     _recording = !_recording;
     [_recordButton setTitle:_recording ? @"stop record" : @"start record"
                    forState:UIControlStateNormal];
+    CFPeerConnectionClient* realClient = (CFPeerConnectionClient*) [_pcClient getRealClient];
+    if (_recording) {
+        [realClient startRecorder:RTCRtpTransceiverDirectionSendOnly path:[self pathUnderDocuments:@"send.mkv"]];
+    } else {
+        [realClient stopRecorder:RTCRtpTransceiverDirectionSendOnly];
+    }
+}
+
+- (void)onMixer:(id)sender {
+    _mixingMusic = !_mixingMusic;
+    [_mixerButton setTitle:_mixingMusic ? @"stop mixer" : @"start mixer"
+                  forState:UIControlStateNormal];
+    CFPeerConnectionClient* realClient = (CFPeerConnectionClient*) [_pcClient getRealClient];
+    if (_mixingMusic) {
+        _mixer = [[CFAudioMixer alloc]
+            initWithBackingTrack:[self pathForFileName:@"mozart.mp3"]
+               captureSampleRate:48000
+               captureChannelNum:1
+                 frameDurationUs:10000
+              enableMusicSyncFix:false
+            waitingMixDelayFrame:5
+                        delegate:self];
+        [_mixer startMixer];
+        [_mixer toggleMusicStreaming:true];
+    } else {
+        [_mixer stopMixer];
+        _mixer = nil;
+    }
+}
+
+- (nullable NSString*)pathUnderDocuments:(NSString*)fileName {
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(
+        NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirPath = paths.firstObject;
+    NSString *filePath =
+        [documentsDirPath stringByAppendingPathComponent:fileName];
+    return filePath;
+}
+
+- (nullable NSString*)pathForFileName:(NSString*)fileName {
+    NSArray* nameComponents = [fileName componentsSeparatedByString:@"."];
+    if (nameComponents.count != 2) {
+        return nil;
+    }
+
+    NSString* path = [[NSBundle mainBundle] pathForResource:nameComponents[0]
+                                                     ofType:nameComponents[1]];
+    return path;
 }
 
 - (void)onSwitchCamera:(id)sender {
@@ -302,19 +358,7 @@
     [self hangup];
 }
 
-@end
-
-@implementation PcClientCallback {
-    __weak CallViewController* _controller;
-}
-
-- (instancetype)initWithVC:(CallViewController*)controller {
-    self = [super init];
-    if (self) {
-        _controller = controller;
-    }
-    return self;
-}
+#pragma mark - Kmp_webrtcPeerConnectionClientCallback
 
 - (nonnull NSString *)onPreferCodecsPeerUid:(nonnull NSString *)peerUid sdp:(nonnull NSString *)sdp {
     return sdp;
@@ -325,22 +369,14 @@
 }
 
 - (void)onLocalDescriptionPeerUid:(nonnull NSString *)peerUid sdp:(nonnull Kmp_webrtcSessionDescription *)sdp { 
-    CallViewController* strongVC = _controller;
-    if (strongVC == nil) {
-        return;
-    }
     // 9. send offer to remote, get answer, set answer
     Kmp_webrtcSessionDescription* answer = [[Kmp_webrtcSessionDescription alloc] initWithType:3 sdpDescription:sdp.sdpDescription];
-    [strongVC->_pcClient setRemoteDescriptionSdp:answer];
+    [_pcClient setRemoteDescriptionSdp:answer];
 }
 
 - (void)onIceCandidatePeerUid:(nonnull NSString *)peerUid candidate:(nonnull Kmp_webrtcIceCandidate *)candidate {
-    CallViewController* strongVC = _controller;
-    if (strongVC == nil) {
-        return;
-    }
     // 10. send ice candidate to remote, get ice candidate, add ice candidate
-    [strongVC->_pcClient addIceCandidateCandidate:candidate];
+    [_pcClient addIceCandidateCandidate:candidate];
 }
 
 - (void)onIceCandidatesRemovedPeerUid:(nonnull NSString *)peerUid candidates:(nonnull NSArray<Kmp_webrtcIceCandidate *> *)candidates {
@@ -351,25 +387,42 @@
 }
 
 - (void)onIceConnectedPeerUid:(nonnull NSString *)peerUid {
-    CallViewController* strongVC = _controller;
-    if (strongVC == nil) {
-        return;
-    }
     NSLog(@"XXPXX onIceConnected %@", peerUid);
     // 11. on ice connected, add renderer for remote stream
+    __weak typeof(self) wself = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        CallViewController* strongVC2 = self->_controller;
-        if (strongVC2 == nil) {
+        typeof(self) sself = wself;
+        if (sself == nil) {
             return;
         }
-        CFPeerConnectionClient* realClient = (CFPeerConnectionClient*) [strongVC2->_pcClient getRealClient];
-        [realClient addRemoteTrackRenderer:strongVC2->_remoteRenderer];
+        CFPeerConnectionClient* realClient = (CFPeerConnectionClient*) [sself->_pcClient getRealClient];
+        [realClient addRemoteTrackRenderer:sself->_remoteRenderer];
 
-        [strongVC2 startGetStats];
+        [sself startGetStats];
     });
 }
 
 - (void)onIceDisconnectedPeerUid:(nonnull NSString *)peerUid {
+}
+
+#pragma mark - CFAudioMixerDelegate
+
+- (void)onSsrcError:(int32_t)ssrc code:(int32_t)code { 
+    NSLog(@"XXPXX onSsrcError %d %d", ssrc, code);
+    __weak typeof(self) wself = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        typeof(self) sself = wself;
+        [sself onMixer:nil];
+    });
+}
+
+- (void)onSsrcFinished:(int32_t)ssrc { 
+    NSLog(@"XXPXX onSsrcFinished %d", ssrc);
+    __weak typeof(self) wself = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        typeof(self) sself = wself;
+        [sself onMixer:nil];
+    });
 }
 
 @end

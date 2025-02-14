@@ -16,11 +16,19 @@ kotlin {
 //        withJava()
 //    }
 
-    listOf(iosArm64()).forEach {
+    val appleTargets = mapOf(
+        iosArm64() to "ios-arm64",
+        iosSimulatorArm64() to "ios-arm64_x86_64-simulator",
+        iosX64() to "ios-arm64_x86_64-simulator",
+    )
+    appleTargets.keys.forEach {
         it.compilations.getByName("main").cinterops {
             val webrtc by creating {
                 definitionFile.set(project.file("src/appleMain/cinterop/WebRTC.def"))
-                compilerOpts("-framework", "WebRTC", "-F${project.rootProject.projectDir}/libs/apple/")
+                compilerOpts(
+                    "-framework", "WebRTC",
+                    "-F${project.rootProject.projectDir}/libs/apple/WebRTC.xcframework/${appleTargets[it]}"
+                )
             }
         }
     }
@@ -40,14 +48,6 @@ kotlin {
 //        }
     }
 
-//    listOf(macosArm64(), macosX64()).forEach {
-//        it.compilations.getByName("main").cinterops {
-//            val webrtc by creating {
-//                definitionFile.set(project.file("src/appleMain/cinterop/ObjCWebRTC.def"))
-//                compilerOpts("-framework", "WebRTC", "-F${project.rootProject.projectDir}/libs/apple/")
-//            }
-//        }
-//    }
 //    js(IR) {
 //        browser {
 //        }
@@ -61,6 +61,7 @@ kotlin {
         all {
             languageSettings.optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
             languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
+            languageSettings.optIn("kotlin.experimental.ExperimentalNativeApi")
         }
 
         commonMain {

@@ -12,60 +12,63 @@ import WebRTC.RTCSessionDescription
 import WebRTC.RTCStatistics
 import WebRTC.RTCStatisticsReport
 import platform.darwin.NSObject
+import kotlin.native.ref.WeakReference
 
 /**
  * Created by Piasy{github.com/Piasy} on 2019-11-30.
  */
-private class ObjCPeerConnectionClientCallback(private val realCallback: PeerConnectionClientCallback) :
+private class ObjCPeerConnectionClientCallback(callback: PeerConnectionClientCallback) :
     WebRTC.CFPeerConnectionClientDelegateProtocol, NSObject() {
+    private val realCallback = WeakReference(callback)
+
     override fun onPreferCodecs(
         peerUid: String,
         sdp: String
     ): String {
-        return realCallback.onPreferCodecs(peerUid, sdp)
+        return realCallback.get()?.onPreferCodecs(peerUid, sdp) ?: sdp
     }
 
     override fun onLocalDescription(
         peerUid: String,
         localSdp: RTCSessionDescription
     ) {
-        realCallback.onLocalDescription(peerUid, fromWebRTCSessionDescription(localSdp))
+        realCallback.get()?.onLocalDescription(peerUid, fromWebRTCSessionDescription(localSdp))
     }
 
     override fun onIceCandidate(
         peerUid: String,
         candidate: RTCIceCandidate
     ) {
-        realCallback.onIceCandidate(peerUid, fromWebRTCIceCandidate(candidate))
+        realCallback.get()?.onIceCandidate(peerUid, fromWebRTCIceCandidate(candidate))
     }
 
     override fun onIceCandidatesRemoved(
         peerUid: String,
         candidates: List<*>
     ) {
-        realCallback.onIceCandidatesRemoved(peerUid, fromWebRTCIceCandidates(candidates))
+        realCallback.get()?.onIceCandidatesRemoved(peerUid, fromWebRTCIceCandidates(candidates))
     }
 
     override fun onPeerConnectionStatsReady(
         peerUid: String,
         report: RTCStatisticsReport
     ) {
-        realCallback.onPeerConnectionStatsReady(peerUid, fromWebRTCStatsReport(report))
+        realCallback.get()?.onPeerConnectionStatsReady(peerUid, fromWebRTCStatsReport(report))
     }
 
     override fun onIceConnected(peerUid: String) {
-        realCallback.onIceConnected(peerUid)
+        realCallback.get()?.onIceConnected(peerUid)
     }
 
     override fun onIceDisconnected(peerUid: String) {
-        realCallback.onIceDisconnected(peerUid)
+        realCallback.get()?.onIceDisconnected(peerUid)
     }
 
     override fun onError(
         peerUid: String,
         code: CFPeerConnectionError
     ) {
-        realCallback.onError(peerUid, code.toInt())
+        realCallback.get()?.onError(peerUid, code.toInt())
     }
 }
 
