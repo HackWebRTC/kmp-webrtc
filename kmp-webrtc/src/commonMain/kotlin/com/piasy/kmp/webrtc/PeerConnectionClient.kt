@@ -1,7 +1,5 @@
 package com.piasy.kmp.webrtc
 
-import com.piasy.kmp.xlog.Logging
-
 /**
  * Created by Piasy{github.com/Piasy} on 2019-11-26.
  */
@@ -28,6 +26,8 @@ interface PeerConnectionClient {
     fun removeIceCandidates(candidates: List<IceCandidate>)
 
     fun setRemoteDescription(sdp: SessionDescription)
+
+    fun addRemoteTrackRenderer(renderer: Any)
 
     fun send(): Boolean
 
@@ -95,53 +95,6 @@ interface PeerConnectionClient {
     }
 }
 
-abstract class PeerConnectionClientFactory {
-    data class Config(
-        val videoCaptureImpl: Int,
-        val videoCaptureWidth: Int,
-        val videoCaptureHeight: Int,
-        val videoCaptureFps: Int,
-        val initCameraFace: Int,
-    ) {
-        internal val screenShare: Boolean
-            get() = videoCaptureImpl == VIDEO_CAPTURE_IMPL_SCREEN
-
-        companion object {
-            const val VIDEO_CAPTURE_IMPL_SYSTEM_CAMERA = 1
-            const val VIDEO_CAPTURE_IMPL_SCREEN = 2
-            const val VIDEO_CAPTURE_IMPL_APP = 4
-
-            const val CAMERA_FACE_FRONT = 0
-            const val CAMERA_FACE_BACK = 1
-        }
-    }
-
-    abstract fun createPeerConnectionClient(
-        peerUid: String,
-        dir: Int,
-        hasVideo: Boolean,
-        videoMaxBitrate: Int,
-        videoMaxFrameRate: Int,
-        callback: PeerConnectionClientCallback
-    ): PeerConnectionClient
-
-    abstract fun createLocalTracks()
-
-    abstract fun adaptVideoOutputFormat(
-        width: Int,
-        height: Int,
-        fps: Int
-    )
-
-    protected fun logI(content: String) {
-        Logging.info("PCClientFactory@${hashCode()}", content)
-    }
-
-    protected fun logE(content: String) {
-        Logging.error("PCClientFactory@${hashCode()}", content)
-    }
-}
-
 interface PeerConnectionClientCallback {
     fun onPreferCodecs(
         peerUid: String,
@@ -200,10 +153,3 @@ interface PeerConnectionClientCallback {
         }
     }
 }
-
-expect fun initializeWebRTC(appContext: Any?, fieldTrials: String, debugLog: Boolean)
-
-expect fun createPeerConnectionClientFactory(
-    config: PeerConnectionClientFactory.Config,
-    screenCaptureErrorHandler: (String?) -> Unit
-): PeerConnectionClientFactory

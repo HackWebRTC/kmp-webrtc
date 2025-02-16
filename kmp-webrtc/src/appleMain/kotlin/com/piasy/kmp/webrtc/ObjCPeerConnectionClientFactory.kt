@@ -7,14 +7,18 @@ import com.piasy.kmp.xlog.initializeMarsXLog
 /**
  * Created by Piasy{github.com/Piasy} on 2019-12-02.
  */
+data class ObjCPrivateConfig(
+    internal val pcFactoryOption: CFPeerConnectionFactoryOption,
+) : PeerConnectionClientFactory.PrivateConfig()
+
 class ObjCPeerConnectionClientFactory(
     private val config: Config,
-    private val screenCaptureErrorHandler: (String?) -> Unit
+    private val errorHandler: (Int, String) -> Unit,
 ) : PeerConnectionClientFactory() {
     private var cameraCapturer: RTCCameraVideoCapturer? = null
-    var cameraCaptureController: CFCaptureController? = null
-    var screenCapturer: CFRPCapturer? = null
-    var isFrontCamera = true
+    private var cameraCaptureController: CFCaptureController? = null
+    private var screenCapturer: CFRPCapturer? = null
+    private var isFrontCamera = false
 
     override fun createPeerConnectionClient(
         peerUid: String,
@@ -38,6 +42,10 @@ class ObjCPeerConnectionClientFactory(
 
         val hijackCapturerDelegate = CFPeerConnectionClient.getHijackCapturerDelegate()
         if (config.screenShare) {
+            val screenCaptureErrorHandler: ((String?) -> Unit) = { error ->
+                logE("screenCaptureError $error")
+                errorHandler(ERR_SCREEN_CAPTURER_FAIL, error ?: "")
+            }
             screenCapturer = CFRPCapturer(
                 hijackCapturerDelegate, screenCaptureErrorHandler, config.videoCaptureHeight, false,
                 config.videoCaptureFps
@@ -47,6 +55,38 @@ class ObjCPeerConnectionClientFactory(
             cameraCaptureController = CFCaptureController(
                 cameraCapturer!!, config.initCameraFace, config.videoCaptureWidth, config.videoCaptureHeight
             )
+            isFrontCamera = config.initCameraFace == Config.CAMERA_FACE_FRONT
+        }
+    }
+
+    override fun addLocalTrackRenderer(renderer: Any) {
+        if (renderer is RTCVideoRendererProtocol) {
+            CFPeerConnectionClient.addLocalTrackRenderer(renderer)
+        }
+    }
+
+    override fun startVideoCapture() {
+        cameraCaptureController?.startCapture {
+            if (it != null) {
+                errorHandler(ERR_CAMERA_CAPTURER_FAIL, it.localizedDescription)
+            }
+        }
+        screenCapturer?.startCapture()
+    }
+
+    override fun stopVideoCapture() {
+        cameraCaptureController?.stopCapture()
+        screenCapturer?.stopCapture()
+    }
+
+    override fun switchCamera(onFinished: (Boolean) -> Unit) {
+        isFrontCamera = !isFrontCamera
+        cameraCaptureController?.switchCamera {
+            if (it != null) {
+                errorHandler(ERR_CAMERA_CAPTURER_FAIL, it.localizedDescription)
+            } else {
+                onFinished(isFrontCamera)
+            }
         }
     }
 
@@ -57,9 +97,20 @@ class ObjCPeerConnectionClientFactory(
     ) {
         CFPeerConnectionClient.adaptVideoOutputFormat(width, height, fps)
     }
+
+    override fun destroyPeerConnectionFactory() {
+        CFPeerConnectionClient.destroyPeerConnectionFactory()
+    }
 }
 
-actual fun initializeWebRTC(appContext: Any?, fieldTrials: String, debugLog: Boolean) {
+actual fun initializeWebRTC(context: Any?, fieldTrials: String, debugLog: Boolean): Boolean {
+    if (PeerConnectionClientFactory.sInitialized) {
+        Logging.info(
+            PeerConnectionClientFactory.TAG,
+            "initialize ${CFPeerConnectionClient.versionName()}, already initialized"
+        )
+        return true
+    }
     initializeMarsXLog(if (debugLog) Logging.LEVEL_DEBUG else Logging.LEVEL_INFO, "webrtc", debugLog)
     RTCCallbackLogger().startWithMessageAndSeverityHandler { log, severity ->
         if (log == null) {
@@ -75,11 +126,15 @@ actual fun initializeWebRTC(appContext: Any?, fieldTrials: String, debugLog: Boo
         }
     }
     CFPeerConnectionClient.initialize(FieldTrial.fieldTrialsStringToMap(fieldTrials))
+    Logging.info(PeerConnectionClientFactory.TAG, "initialize ${CFPeerConnectionClient.versionName()}")
+    PeerConnectionClientFactory.sInitialized = true
+    return true
 }
 
 actual fun createPeerConnectionClientFactory(
     config: PeerConnectionClientFactory.Config,
-    screenCaptureErrorHandler: (String?) -> Unit
+    errorHandler: (Int, String) -> Unit,
 ): PeerConnectionClientFactory {
-    return ObjCPeerConnectionClientFactory(config, screenCaptureErrorHandler)
+    CFPeerConnectionClient.createPeerConnectionFactory((config.privateConfig as ObjCPrivateConfig).pcFactoryOption)
+    return ObjCPeerConnectionClientFactory(config, errorHandler)
 }

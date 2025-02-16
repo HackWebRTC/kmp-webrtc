@@ -66,7 +66,7 @@ static NSString* const barButtonImageString = @"ic_settings_black_24dp.png";
        forControlEvents:UIControlEventTouchUpInside];
 
     UILabel* version = [[UILabel alloc] initWithFrame:CGRectZero];
-    version.text = [NSString stringWithFormat:@"kmp-webrtc %@", @CF_PC_CLIENT_VERSION];
+    version.text = [NSString stringWithFormat:@"kmp-webrtc %@", [CFPeerConnectionClient versionName]];
     version.textAlignment = NSTextAlignmentCenter;
     [self.view addSubview:version];
     version.sd_layout.widthIs(250)

@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kmp)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.vanniktech.mavenPublish)
+    alias(libs.plugins.android.library)
     // alias will fail, see https://github.com/gradle/gradle/issues/20084
     id("org.jetbrains.kotlin.native.cocoapods")
 }
@@ -12,10 +13,6 @@ version = Consts.releaseVersion
 group = Consts.releaseGroup
 
 kotlin {
-//    jvm {
-//        withJava()
-//    }
-
     val appleTargets = mapOf(
         iosArm64() to "ios-arm64",
         iosSimulatorArm64() to "ios-arm64_x86_64-simulator",
@@ -48,6 +45,11 @@ kotlin {
 //        }
     }
 
+    androidTarget {
+        publishLibraryVariants("release")
+    }
+
+
 //    js(IR) {
 //        browser {
 //        }
@@ -75,12 +77,14 @@ kotlin {
                 implementation(libs.kotlin.test)
             }
         }
-//        jvmMain {
-//            dependencies {
-//            }
-//        }
         appleMain {
             dependencies {
+            }
+        }
+        androidMain {
+            dependencies {
+                implementation(files("../libs/android/webrtc.aar"))
+                implementation(libs.androidx.lifecycle)
             }
         }
 //        jsMain {
@@ -91,6 +95,24 @@ kotlin {
 //            dependencies {
 //            }
 //        }
+    }
+}
+
+android {
+    compileSdk = libs.versions.compileSdk.get().toInt()
+    namespace = Consts.androidNS
+
+    defaultConfig {
+        minSdk = libs.versions.minSdk.get().toInt()
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.toVersion(libs.versions.jvm.get().toInt())
+        targetCompatibility = JavaVersion.toVersion(libs.versions.jvm.get().toInt())
+    }
+
+    kotlin {
+        jvmToolchain(libs.versions.jvm.get().toInt())
     }
 }
 

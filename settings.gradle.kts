@@ -20,6 +20,6 @@ dependencyResolutionManagement {
 rootProject.name = "kmp-webrtc"
 include(":kmp-webrtc")
 
-//if (System.getProperty("os.name") == "Mac OS X") {
-//    include(":example:androidApp")
-//}
+if (System.getProperty("os.name") == "Mac OS X") {
+    include(":example:androidApp")
+}

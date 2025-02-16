@@ -40,25 +40,25 @@
 @implementation CallViewController {
     ARDSettingsModel* _settingsModel;
     bool _isLandscape;
-
+    
     Kmp_webrtcObjCPeerConnectionClientFactory* _pcClientFactory;
     id<Kmp_webrtcPeerConnectionClient> _pcClient;
     NSTimer* _statsTimer;
     CFAudioMixer* _mixer;
-
+    
     UIView* _rootLayout;
     CFEAGLVideoView* _remoteRenderer;
     CFEAGLVideoView* _localRenderer;
-
+    
     UIButton* _leaveButton;
     UIButton* _recordButton;
     UIButton* _mixerButton;
     UIButton* _switchCameraButton;
-
+    
     bool _recording;
     bool _mixingMusic;
     bool _videoEnabled;
-
+    
     bool _sendLastFrame;
     bool _left;
 }
@@ -74,7 +74,7 @@
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations {
     return _isLandscape ? UIInterfaceOrientationMaskLandscape
-                        : UIInterfaceOrientationMaskPortrait;
+    : UIInterfaceOrientationMaskPortrait;
 }
 
 - (void)loadView {
@@ -98,7 +98,7 @@
                       action:@selector(onRecord:)
             forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:_recordButton];
-    _recordButton.sd_layout.widthIs(150)
+    _recordButton.sd_layout.widthIs(120)
         .heightIs(20)
         .bottomSpaceToView(self.view, 30)
         .leftSpaceToView(self.view, 10);
@@ -111,7 +111,7 @@
                       action:@selector(onMixer:)
             forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:_mixerButton];
-    _mixerButton.sd_layout.widthIs(150)
+    _mixerButton.sd_layout.widthIs(120)
         .heightIs(20)
         .bottomEqualToView(_recordButton)
         .leftSpaceToView(_recordButton, 10);
@@ -194,74 +194,33 @@
         .bottomEqualToView(_rootLayout);
     [wrapper addSubview:_remoteRenderer];
 
-    int videoWidth = [_settingsModel currentVideoResolutionWidthFromStore];
-    int videoHeight = [_settingsModel currentVideoResolutionHeightFromStore];
+    [self startLoopback];
+}
 
-    // 1. initialize
-    NSString *fieldTrials = @"WebRTC-Video-H26xPacketBuffer/Enabled/";
-    [Kmp_webrtcObjCPeerConnectionClientFactoryKt initializeWebRTCAppContext:nil fieldTrials:fieldTrials debugLog:YES];
-
-    // 2. create PcClientFactory
-    Kmp_webrtcPeerConnectionClientFactoryConfig* pcClientFactoryConfig
-    = [[Kmp_webrtcPeerConnectionClientFactoryConfig alloc]
-       initWithVideoCaptureImpl:1
-       videoCaptureWidth:videoWidth
-       videoCaptureHeight:videoHeight
-       videoCaptureFps:30
-       initCameraFace:0];
-    _pcClientFactory = (Kmp_webrtcObjCPeerConnectionClientFactory*)
-      [Kmp_webrtcObjCPeerConnectionClientFactoryKt createPeerConnectionClientFactoryConfig:pcClientFactoryConfig
-                                                                 screenCaptureErrorHandler:^(NSString * _Nullable error) {
-        NSLog(@"XXPXX screenCaptureErrorHandler %@", error);
-    }];
-
-    // 3. create PcFactory
-    CFPeerConnectionFactoryOption* option = [[CFPeerConnectionFactoryOption alloc] init];
-    option.preferredVideoCodec = [_settingsModel currentVideoCodecSettingFromStore];
-    option.disableEncryption = YES;
-    [CFPeerConnectionClient createPeerConnectionFactory:option];
-
-    // 4. create local tracks
-    [_pcClientFactory createLocalTracks];
-
-    // 5. add local preview & start camera capture
-    [CFPeerConnectionClient addLocalTrackRenderer:_localRenderer];
-    [_pcClientFactory.cameraCaptureController startCapture:^(NSError * _Nonnull error) {
-        NSLog(@"XXPXX cameraCaptureController startCapture start error %@", error);
-    }];
-
-    // 6. create PcClient
-    _pcClient = [_pcClientFactory createPeerConnectionClientPeerUid:@"test"
-                                                               dir:0
-                                                          hasVideo:YES
-                                                   videoMaxBitrate:[[_settingsModel currentMaxBitrateSettingFromStore] intValue]
-                                                 videoMaxFrameRate:30
-                                                          callback:self];
-
-    // 7. create pc
-    NSArray* iceServers = [NSArray array];
-    [_pcClient createPeerConnectionIceServers:iceServers];
-
-    // 8. create offer
-    [_pcClient createOffer];
+- (void)viewWillDisappear:(BOOL)animated {
+    if (!_left) {
+        [self hangup:NO];
+    }
 }
 
 - (void)dealloc {
     if (!_left) {
-        [self hangup];
+        [self hangup:NO];
     }
 }
 
-- (void)hangup {
+- (void)hangup:(BOOL)dismissView {
     _left = true;
 
     [_statsTimer invalidate];
     _statsTimer = nil;
-    [_pcClientFactory.cameraCaptureController stopCapture];
+    [_pcClientFactory stopVideoCapture];
     [_pcClient close];
-    [CFPeerConnectionClient destroyPeerConnectionFactory];
+    [_pcClientFactory destroyPeerConnectionFactory];
 
-    [self dismissViewControllerAnimated:YES completion:nil];
+    if (dismissView) {
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
 }
 
 - (void)startGetStats {
@@ -292,7 +251,6 @@
     _mixingMusic = !_mixingMusic;
     [_mixerButton setTitle:_mixingMusic ? @"stop mixer" : @"start mixer"
                   forState:UIControlStateNormal];
-    CFPeerConnectionClient* realClient = (CFPeerConnectionClient*) [_pcClient getRealClient];
     if (_mixingMusic) {
         _mixer = [[CFAudioMixer alloc]
             initWithBackingTrack:[self pathForFileName:@"mozart.mp3"]
@@ -331,9 +289,17 @@
 }
 
 - (void)onSwitchCamera:(id)sender {
-    _switchCameraButton.enabled = false;
-    [_pcClientFactory.cameraCaptureController switchCamera:^(NSError * _Nonnull error) {
-        NSLog(@"switchCamera result: %@", error);
+    _switchCameraButton.enabled = NO;
+    __weak typeof(self) wself = self;
+    [_pcClientFactory switchCameraOnFinished:^(Kmp_webrtcBoolean * _Nonnull isFront) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            typeof(self) sself = wself;
+            if (sself == nil) {
+                return;
+            }
+            sself->_switchCameraButton.enabled = YES;
+            [sself->_switchCameraButton setTitle:[isFront boolValue] ? @"FRONT" : @"BACK" forState:UIControlStateNormal];
+        });
     }];
 }
 
@@ -355,10 +321,87 @@
 }
 
 - (void)onLeaveCall:(id)sender {
-    [self hangup];
+    [self hangup:YES];
+}
+
+- (void)startLoopback {
+    int videoWidth = [_settingsModel currentVideoResolutionWidthFromStore];
+    int videoHeight = [_settingsModel currentVideoResolutionHeightFromStore];
+
+    // 1. initialize
+    NSString *fieldTrials = @"WebRTC-Video-H26xPacketBuffer/Enabled/";
+    [Kmp_webrtcObjCPeerConnectionClientFactoryKt initializeWebRTCContext:nil fieldTrials:fieldTrials debugLog:YES];
+
+    // 2. create PcClientFactory
+    CFPeerConnectionFactoryOption* option = [[CFPeerConnectionFactoryOption alloc] init];
+    option.preferredVideoCodec = [_settingsModel currentVideoCodecSettingFromStore];
+    option.disableEncryption = YES;
+    Kmp_webrtcObjCPrivateConfig* privateConfig = [[Kmp_webrtcObjCPrivateConfig alloc] initWithPcFactoryOption:option];
+
+    Kmp_webrtcPeerConnectionClientFactoryConfig* pcClientFactoryConfig
+    = [[Kmp_webrtcPeerConnectionClientFactoryConfig alloc]
+        initWithVideoCaptureImpl:1
+               videoCaptureWidth:videoWidth
+              videoCaptureHeight:videoHeight
+                 videoCaptureFps:30
+                  initCameraFace:0
+                   privateConfig:privateConfig];
+    _pcClientFactory = (Kmp_webrtcObjCPeerConnectionClientFactory*)
+    [Kmp_webrtcObjCPeerConnectionClientFactoryKt createPeerConnectionClientFactoryConfig:pcClientFactoryConfig
+                                                                            errorHandler:^(Kmp_webrtcInt * _Nonnull code, NSString * _Nonnull msg) {
+        NSLog(@"XXPXX PCFactory errorHandler %@ %@", code, msg);
+    }];
+
+    // 3. create local tracks
+    [_pcClientFactory createLocalTracks];
+
+    // 4. add local preview & start camera capture
+    [_pcClientFactory addLocalTrackRendererRenderer:_localRenderer];
+    [_pcClientFactory startVideoCapture];
+
+    // 5. create PcClient
+    _pcClient = [_pcClientFactory createPeerConnectionClientPeerUid:@"test"
+                                                               dir:0
+                                                          hasVideo:YES
+                                                   videoMaxBitrate:[[_settingsModel currentMaxBitrateSettingFromStore] intValue]
+                                                 videoMaxFrameRate:30
+                                                          callback:self];
+
+    // 6. create pc
+    NSArray* iceServers = [NSArray array];
+    [_pcClient createPeerConnectionIceServers:iceServers];
+
+    // 7. create offer
+    [_pcClient createOffer];
 }
 
 #pragma mark - Kmp_webrtcPeerConnectionClientCallback
+
+- (void)onLocalDescriptionPeerUid:(nonnull NSString *)peerUid sdp:(nonnull Kmp_webrtcSessionDescription *)sdp { 
+    // 8. send offer to remote, get answer from remote, and set answer
+    Kmp_webrtcSessionDescription* answer = [[Kmp_webrtcSessionDescription alloc] initWithType:3 sdpDescription:sdp.sdpDescription];
+    [_pcClient setRemoteDescriptionSdp:answer];
+}
+
+- (void)onIceCandidatePeerUid:(nonnull NSString *)peerUid candidate:(nonnull Kmp_webrtcIceCandidate *)candidate {
+    // 9. send ice candidate to remote, get ice candidate from remote, add ice candidate
+    [_pcClient addIceCandidateCandidate:candidate];
+}
+
+- (void)onIceConnectedPeerUid:(nonnull NSString *)peerUid {
+    NSLog(@"XXPXX onIceConnected %@", peerUid);
+    __weak typeof(self) wself = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        typeof(self) sself = wself;
+        if (sself == nil) {
+            return;
+        }
+        // 10. on ice connected, add renderer for remote stream
+        [sself->_pcClient addRemoteTrackRendererRenderer:sself->_remoteRenderer];
+
+        [sself startGetStats];
+    });
+}
 
 - (nonnull NSString *)onPreferCodecsPeerUid:(nonnull NSString *)peerUid sdp:(nonnull NSString *)sdp {
     return sdp;
@@ -368,38 +411,11 @@
     NSLog(@"XXPXX onError %@ %d", peerUid, code);
 }
 
-- (void)onLocalDescriptionPeerUid:(nonnull NSString *)peerUid sdp:(nonnull Kmp_webrtcSessionDescription *)sdp { 
-    // 9. send offer to remote, get answer, set answer
-    Kmp_webrtcSessionDescription* answer = [[Kmp_webrtcSessionDescription alloc] initWithType:3 sdpDescription:sdp.sdpDescription];
-    [_pcClient setRemoteDescriptionSdp:answer];
-}
-
-- (void)onIceCandidatePeerUid:(nonnull NSString *)peerUid candidate:(nonnull Kmp_webrtcIceCandidate *)candidate {
-    // 10. send ice candidate to remote, get ice candidate, add ice candidate
-    [_pcClient addIceCandidateCandidate:candidate];
-}
-
 - (void)onIceCandidatesRemovedPeerUid:(nonnull NSString *)peerUid candidates:(nonnull NSArray<Kmp_webrtcIceCandidate *> *)candidates {
 }
 
-- (void)onPeerConnectionStatsReadyPeerUid:(nonnull NSString *)peerUid report:(nonnull Kmp_webrtcRtcStatsReport *)report { 
+- (void)onPeerConnectionStatsReadyPeerUid:(nonnull NSString *)peerUid report:(nonnull Kmp_webrtcRtcStatsReport *)report {
     NSLog(@"XXPXX onPeerConnectionStatsReady %@", report);
-}
-
-- (void)onIceConnectedPeerUid:(nonnull NSString *)peerUid {
-    NSLog(@"XXPXX onIceConnected %@", peerUid);
-    // 11. on ice connected, add renderer for remote stream
-    __weak typeof(self) wself = self;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        typeof(self) sself = wself;
-        if (sself == nil) {
-            return;
-        }
-        CFPeerConnectionClient* realClient = (CFPeerConnectionClient*) [sself->_pcClient getRealClient];
-        [realClient addRemoteTrackRenderer:sself->_remoteRenderer];
-
-        [sself startGetStats];
-    });
 }
 
 - (void)onIceDisconnectedPeerUid:(nonnull NSString *)peerUid {

@@ -6,6 +6,7 @@ targets:
     deploymentTarget: "14.0"
     sources:
       - path: iosApp
+      - path: ../common/assets
     settings:
       LIBRARY_SEARCH_PATHS: "$(inherited)"
       OTHER_LDFLAGS: "$(inherited)"

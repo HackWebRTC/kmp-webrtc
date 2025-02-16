@@ -5,14 +5,16 @@ plugins {
 }
 
 android {
-    namespace = "${Consts.androidNS.replace('_', '.')}.android"
+    namespace = "${Consts.androidNS}.android"
     compileSdk = libs.versions.compileSdk.get().toInt()
     defaultConfig {
-        applicationId = "${Consts.androidNS.replace('_', '.')}.android"
+        applicationId = "${Consts.androidNS}.android"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
         versionName = Consts.releaseVersion
+
+        sourceSets.getByName("main").assets.srcDir("../common/assets")
     }
     buildFeatures {
         compose = true
@@ -39,11 +41,12 @@ android {
 }
 
 dependencies {
-    implementation(project(":example:shared"))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.tooling)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.compose.material)
-    implementation(libs.androidx.activity.compose)
+    implementation(project(":kmp-webrtc"))
+    implementation(files("../../libs/android/webrtc.aar"))
+    implementation(libs.androidx.lifecycle)
+    implementation(libs.kmpXlog)
+
+    implementation(libs.androidx.appcompat)
+    implementation(libs.permissionsDispatcher)
+    annotationProcessor(libs.permissionsDispatcher.processor)
 }

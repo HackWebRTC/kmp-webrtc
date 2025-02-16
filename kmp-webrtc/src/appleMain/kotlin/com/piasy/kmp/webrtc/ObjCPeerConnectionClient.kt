@@ -1,16 +1,9 @@
 package com.piasy.kmp.webrtc
 
-import WebRTC.CFPeerConnectionClient
-import WebRTC.CFPeerConnectionError
-import WebRTC.RTCIceCandidate
-import WebRTC.RTCIceServer
-import WebRTC.RTCSdpType
+import WebRTC.*
 import WebRTC.RTCSdpType.RTCSdpTypeAnswer
 import WebRTC.RTCSdpType.RTCSdpTypeOffer
 import WebRTC.RTCSdpType.RTCSdpTypePrAnswer
-import WebRTC.RTCSessionDescription
-import WebRTC.RTCStatistics
-import WebRTC.RTCStatisticsReport
 import platform.darwin.NSObject
 import kotlin.native.ref.WeakReference
 
@@ -18,7 +11,7 @@ import kotlin.native.ref.WeakReference
  * Created by Piasy{github.com/Piasy} on 2019-11-30.
  */
 private class ObjCPeerConnectionClientCallback(callback: PeerConnectionClientCallback) :
-    WebRTC.CFPeerConnectionClientDelegateProtocol, NSObject() {
+    CFPeerConnectionClientDelegateProtocol, NSObject() {
     private val realCallback = WeakReference(callback)
 
     override fun onPreferCodecs(
@@ -127,6 +120,12 @@ class ObjCPeerConnectionClient(
 
     override fun setRemoteDescription(sdp: SessionDescription) {
         realClient.setRemoteDescription(toWebRTCSessionDescription(sdp))
+    }
+
+    override fun addRemoteTrackRenderer(renderer: Any) {
+        if (renderer is RTCVideoRendererProtocol) {
+            realClient.addRemoteTrackRenderer(renderer)
+        }
     }
 
     override fun send(): Boolean {

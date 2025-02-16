@@ -3,5 +3,5 @@ object Consts {
   const val releaseName = "kmp-webrtc"
   const val releaseVersion = "1.0.43659"
 
-  val androidNS = "$releaseGroup.${releaseName.replace('-', '_')}"
+  val androidNS = "$releaseGroup.${releaseName.replace('-', '.')}"
 }
