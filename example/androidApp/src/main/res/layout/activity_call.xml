@@ -21,19 +21,19 @@
       >
 
     <Button
+            android:id="@+id/btnCamera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="FRONT"
+            />
+
+    <Button
         android:id="@+id/btnVideo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="Video"
-        />
-
-    <Button
-        android:id="@+id/btnRecordL"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="start record L"
         />
 
     <Button
@@ -65,12 +65,12 @@
         />
 
     <Button
-        android:id="@+id/btnCamera"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="FRONT"
-        />
+            android:id="@+id/btnMixer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="start mixer"
+            />
 
     <Button
         android:id="@+id/btnStop"

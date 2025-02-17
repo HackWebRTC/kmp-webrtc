@@ -212,6 +212,9 @@
 - (void)hangup:(BOOL)dismissView {
     _left = true;
 
+    [_mixer stopMixer];
+    _mixer = nil;
+
     [_statsTimer invalidate];
     _statsTimer = nil;
     [_pcClientFactory stopVideoCapture];
@@ -425,19 +428,23 @@
 
 - (void)onSsrcError:(int32_t)ssrc code:(int32_t)code { 
     NSLog(@"XXPXX onSsrcError %d %d", ssrc, code);
-    __weak typeof(self) wself = self;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        typeof(self) sself = wself;
-        [sself onMixer:nil];
-    });
+    [self onMixerStopped];
 }
 
 - (void)onSsrcFinished:(int32_t)ssrc { 
     NSLog(@"XXPXX onSsrcFinished %d", ssrc);
+    [self onMixerStopped];
+}
+
+- (void)onMixerStopped {
     __weak typeof(self) wself = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         typeof(self) sself = wself;
-        [sself onMixer:nil];
+        sself->_mixingMusic = NO;
+        [sself->_mixerButton setTitle:@"start mixer"
+                             forState:UIControlStateNormal];
+        [sself->_mixer stopMixer];
+        sself->_mixer = nil;
     });
 }
 

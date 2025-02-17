@@ -2,6 +2,7 @@ package com.piasy.kmp.webrtc.android;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -14,8 +15,14 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.piasy.avconf.AudioMixer;
 import com.piasy.avconf.view.FreezeAwareRenderer;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 
@@ -47,12 +54,11 @@ import static com.piasy.kmp.webrtc.android.HallActivity.EXTRA_VIDEO_FPS;
 import static com.piasy.kmp.webrtc.android.HallActivity.EXTRA_VIDEO_HEIGHT;
 import static com.piasy.kmp.webrtc.android.HallActivity.EXTRA_VIDEO_WIDTH;
 
-public class CallActivity extends AppCompatActivity implements PeerConnectionClientCallback {
+public class CallActivity extends AppCompatActivity implements PeerConnectionClientCallback, AudioMixer.MixerCallback {
 
   private static final String TAG = "CallActivity";
 
   private static final boolean SAVE_YUV_FRAME = false;
-  private static final boolean LOCAL_RECORD = false;
   private static final boolean PAUSE_STREAMING = true;
 
   private boolean isPublisher;
@@ -66,8 +72,8 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
   private Button recordButton;
   private boolean recording;
 
-  private Button recordLButton;
-  private boolean localRecording = false;
+  private Button mixerButton;
+  private boolean mixing;
 
   private Button pauseButton;
   private boolean streamingPaused = false;
@@ -82,6 +88,7 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
   private EglBase eglBase;
   private PeerConnectionClientFactory pcClientFactory;
   private PeerConnectionClient pcClient;
+  private AudioMixer mixer;
 
   private static int getSystemUiVisibility() {
     return View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
@@ -129,26 +136,28 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
     recordButton.setOnClickListener(v -> {
       recording = !recording;
       recordButton.setText(recording ? "stop record" : "start record");
-//      if (recording) {
-//        avConf.startRecording(new StartRecordingCallback() {
-//          @Override
-//          public void onStartSuccess(final String filename) {
-//            Toast.makeText(CallActivity.this,
-//                "start record success: " + filename + ".mkv",
-//                Toast.LENGTH_SHORT).show();
-//          }
-//
-//          @Override
-//          public void onStartFail() {
-//            Toast.makeText(CallActivity.this, "start record fail",
-//                Toast.LENGTH_SHORT).show();
-//            recording = false;
-//            recordButton.setText("start record");
-//          }
-//        });
-//      } else {
-//        avConf.stopRecording();
-//      }
+      if (recording) {
+        File path = new File(getExternalFilesDir(null), "send.mkv");
+        pcClient.startRecorder(PeerConnectionClient.DIR_SEND_ONLY, path.getAbsolutePath());
+      } else {
+        pcClient.stopRecorder(PeerConnectionClient.DIR_SEND_ONLY);
+      }
+    });
+
+    mixerButton = findViewById(R.id.btnMixer);
+    mixerButton.setText(mixing ? "stop mixer" : "start mixer");
+    mixerButton.setOnClickListener(v -> {
+      mixing = !mixing;
+      mixerButton.setText(mixing ? "stop mixer" : "start mixer");
+      if (mixing) {
+        File path = new File(getExternalFilesDir(null), "mozart.mp3");
+        mixer = new AudioMixer(path.getAbsolutePath(), 48000, 1, 10000, false, 5, this);
+        mixer.startMixer();
+        mixer.toggleMusicStreaming(true);
+      } else {
+        mixer.stopMixer();
+        mixer = null;
+      }
     });
 
     Button switchCamera = findViewById(R.id.btnCamera);
@@ -175,22 +184,6 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
 //      avConf.setVideoEnabled(!audioOnly);
     });
 
-    recordLButton = findViewById(R.id.btnRecordL);
-    if (LOCAL_RECORD) {
-      recordLButton.setOnClickListener(v -> {
-        localRecording = !localRecording;
-        recordLButton.setText(localRecording ? "stop record L" : "start record L");
-//        if (localRecording) {
-//          avConf.startLocalRecording(selfUid, PeerConnectionClient.DIR_SEND_ONLY,
-//              "/sdcard/avconf/record_" + System.currentTimeMillis() + ".mkv");
-//        } else {
-//          avConf.stopLocalRecording(selfUid, PeerConnectionClient.DIR_SEND_ONLY);
-//        }
-      });
-    } else {
-      recordButton.setVisibility(View.GONE);
-    }
-
     pauseButton = findViewById(R.id.btnPauseStreaming);
     if (PAUSE_STREAMING) {
       pauseButton.setOnClickListener(v -> {
@@ -216,7 +209,31 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
     localRenderer = createRenderer(true);
     remoteRenderer = createRenderer(false);
 
+    prepareMusic();
+
     startLoopback();
+  }
+
+  private void prepareMusic() {
+    try {
+      File path = new File(getExternalFilesDir(null), "mozart.mp3");
+      if (path.exists()) {
+        return;
+      }
+      InputStream inputStream = getAssets().open("mozart.mp3");
+      FileOutputStream outputStream = new FileOutputStream(path);
+
+      byte[] buffer = new byte[1024];
+      int length;
+      while ((length = inputStream.read(buffer)) > 0) {
+        outputStream.write(buffer, 0, length);
+      }
+      inputStream.close();
+      outputStream.close();
+      Logging.INSTANCE.info(TAG, "copy music success");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   private FreezeAwareRenderer createRenderer(boolean local) {
@@ -237,6 +254,7 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
             local ? "loopback_local" : "loopback_remote", FreezeAwareRenderer.SCALE_TYPE_CENTER_CROP);
     renderer.init(eglBase.getEglBaseContext(), null);
     renderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
+    renderer.setMirror(local);
 
     wrapper.addView(renderer, ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT);
@@ -318,6 +336,10 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
 
   // Disconnect from remote resources, dispose of local resources, and exit.
   private void disconnect() {
+    if (mixer != null) {
+      mixer.stopMixer();
+      mixer = null;
+    }
     if (pcClientFactory != null) {
       pcClientFactory.stopVideoCapture();
       pcClient.close();
@@ -339,21 +361,41 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
 
   @Override
   public void onIceCandidatesRemoved(@NotNull String peerUid, @NotNull List<@NotNull IceCandidate> candidates) {
-
   }
 
   @Override
   public void onPeerConnectionStatsReady(@NotNull String peerUid, @NotNull RtcStatsReport report) {
-
   }
 
   @Override
   public void onIceDisconnected(@NotNull String peerUid) {
-
   }
 
   @Override
   public void onError(@NotNull String peerUid, int code) {
+  }
 
+  @Override
+  public void onMixerSsrcFinished(int ssrc) {
+    Logging.INSTANCE.info(TAG, "onMixerSsrcFinished " + ssrc);
+    onMixerStopped();
+  }
+
+  @Override
+  public void onMixerSsrcError(int ssrc, int error) {
+    Logging.INSTANCE.error(TAG, "onMixerSsrcError " + ssrc + ", " + error);
+    onMixerStopped();
+  }
+
+  private void onMixerStopped() {
+    runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        mixing = false;
+        mixerButton.setText("start mixer");
+        mixer.stopMixer();
+        mixer = null;
+      }
+    });
   }
 }
