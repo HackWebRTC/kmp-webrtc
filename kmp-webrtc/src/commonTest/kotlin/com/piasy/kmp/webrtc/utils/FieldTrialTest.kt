@@ -1,4 +1,4 @@
-package com.piasy.kmp.webrtc
+package com.piasy.kmp.webrtc.utils
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

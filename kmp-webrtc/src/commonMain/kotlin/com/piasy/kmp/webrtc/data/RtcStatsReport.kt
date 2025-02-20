@@ -1,4 +1,4 @@
-package com.piasy.kmp.webrtc
+package com.piasy.kmp.webrtc.data
 
 import kotlinx.serialization.Serializable
 

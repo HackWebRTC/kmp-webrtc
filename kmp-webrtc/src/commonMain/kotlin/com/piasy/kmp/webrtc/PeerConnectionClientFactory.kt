@@ -5,7 +5,11 @@ import com.piasy.kmp.xlog.Logging
 /**
  * Created by Piasy{github.com/Piasy} on 2025-02-16.
  */
-abstract class PeerConnectionClientFactory {
+abstract class PeerConnectionClientFactory(
+    protected val config: Config,
+    protected val errorHandler: (Int, String) -> Unit,
+    private val audioDeviceManager: AudioDeviceManager,
+) {
     data class Config(
         val videoCaptureImpl: Int,
         val videoCaptureWidth: Int,
@@ -29,6 +33,14 @@ abstract class PeerConnectionClientFactory {
 
     open class PrivateConfig
 
+    init {
+        audioDeviceManager.start(object : AudioDeviceManagerCallback {
+            override fun onAudioDeviceChanged(device: AudioDevice) {
+                // do nothing now
+            }
+        })
+    }
+
     abstract fun createPeerConnectionClient(
         peerUid: String,
         dir: Int,
@@ -46,13 +58,19 @@ abstract class PeerConnectionClientFactory {
     abstract fun stopVideoCapture()
     abstract fun switchCamera(onFinished: (Boolean) -> Unit)
 
+    fun toggleSpeaker(speakerOn: Boolean) {
+        audioDeviceManager.setSpeakerphoneOn(speakerOn)
+    }
+
     abstract fun adaptVideoOutputFormat(
         width: Int,
         height: Int,
         fps: Int
     )
 
-    abstract fun destroyPeerConnectionFactory()
+    open fun destroyPeerConnectionFactory() {
+        audioDeviceManager.stop()
+    }
 
     protected fun logI(content: String) {
         Logging.info("$TAG@${hashCode()}", content)

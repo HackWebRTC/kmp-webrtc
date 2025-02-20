@@ -1,4 +1,4 @@
-package com.piasy.kmp.webrtc
+package com.piasy.kmp.webrtc.utils
 
 internal object FieldTrial {
     fun fieldTrialsStringToMap(fieldTrials: String): Map<Any?, *> {

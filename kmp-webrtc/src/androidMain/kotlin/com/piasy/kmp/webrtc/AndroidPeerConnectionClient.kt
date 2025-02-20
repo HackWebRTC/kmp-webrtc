@@ -1,5 +1,10 @@
 package com.piasy.kmp.webrtc
 
+import com.piasy.kmp.webrtc.data.IceCandidate
+import com.piasy.kmp.webrtc.data.IceServer
+import com.piasy.kmp.webrtc.data.RtcStats
+import com.piasy.kmp.webrtc.data.RtcStatsReport
+import com.piasy.kmp.webrtc.data.SessionDescription
 import org.webrtc.PeerConnection
 import org.webrtc.PeerConnection.TlsCertPolicy
 import org.webrtc.PeerConnection.TlsCertPolicy.TLS_CERT_POLICY_INSECURE_NO_CHECK

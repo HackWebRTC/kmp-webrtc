@@ -4,6 +4,11 @@ import WebRTC.*
 import WebRTC.RTCSdpType.RTCSdpTypeAnswer
 import WebRTC.RTCSdpType.RTCSdpTypeOffer
 import WebRTC.RTCSdpType.RTCSdpTypePrAnswer
+import com.piasy.kmp.webrtc.data.IceCandidate
+import com.piasy.kmp.webrtc.data.IceServer
+import com.piasy.kmp.webrtc.data.RtcStats
+import com.piasy.kmp.webrtc.data.RtcStatsReport
+import com.piasy.kmp.webrtc.data.SessionDescription
 import platform.darwin.NSObject
 import kotlin.native.ref.WeakReference
 

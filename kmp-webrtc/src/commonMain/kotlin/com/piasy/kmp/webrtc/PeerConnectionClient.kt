@@ -1,5 +1,10 @@
 package com.piasy.kmp.webrtc
 
+import com.piasy.kmp.webrtc.data.IceCandidate
+import com.piasy.kmp.webrtc.data.IceServer
+import com.piasy.kmp.webrtc.data.RtcStatsReport
+import com.piasy.kmp.webrtc.data.SessionDescription
+
 /**
  * Created by Piasy{github.com/Piasy} on 2019-11-26.
  */

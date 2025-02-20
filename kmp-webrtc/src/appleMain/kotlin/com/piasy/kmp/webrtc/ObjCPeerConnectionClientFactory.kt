@@ -1,6 +1,7 @@
 package com.piasy.kmp.webrtc
 
 import WebRTC.*
+import com.piasy.kmp.webrtc.utils.FieldTrial
 import com.piasy.kmp.xlog.Logging
 import com.piasy.kmp.xlog.initializeMarsXLog
 
@@ -12,9 +13,9 @@ data class ObjCPrivateConfig(
 ) : PeerConnectionClientFactory.PrivateConfig()
 
 class ObjCPeerConnectionClientFactory(
-    private val config: Config,
-    private val errorHandler: (Int, String) -> Unit,
-) : PeerConnectionClientFactory() {
+    config: Config,
+    errorHandler: (Int, String) -> Unit,
+) : PeerConnectionClientFactory(config, errorHandler, IOSAudioDeviceManager()) {
     private var cameraCapturer: RTCCameraVideoCapturer? = null
     private var cameraCaptureController: CFCaptureController? = null
     private var screenCapturer: CFRPCapturer? = null
@@ -99,6 +100,7 @@ class ObjCPeerConnectionClientFactory(
     }
 
     override fun destroyPeerConnectionFactory() {
+        super.destroyPeerConnectionFactory()
         CFPeerConnectionClient.destroyPeerConnectionFactory()
     }
 }

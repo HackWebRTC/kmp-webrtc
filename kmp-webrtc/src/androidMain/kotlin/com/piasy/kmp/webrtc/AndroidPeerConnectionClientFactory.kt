@@ -27,10 +27,12 @@ data class AndroidPrivateConfig(
 ) : PeerConnectionClientFactory.PrivateConfig()
 
 class AndroidPeerConnectionClientFactory(
-    private val config: Config,
+    config: Config,
+    errorHandler: (Int, String) -> Unit,
+    appContext: Context,
     private val privateConfig: AndroidPrivateConfig,
-    private val errorHandler: (Int, String) -> Unit,
-) : PeerConnectionClientFactory(), DefaultLifecycleObserver {
+) : PeerConnectionClientFactory(config, errorHandler, AndroidAudioDeviceManager(appContext, SpeakerphoneMode.AUTO)),
+    DefaultLifecycleObserver {
     init {
         privateConfig.lifecycle.addObserver(this)
     }
@@ -124,6 +126,7 @@ class AndroidPeerConnectionClientFactory(
     }
 
     override fun destroyPeerConnectionFactory() {
+        super.destroyPeerConnectionFactory()
         com.piasy.avconf.PeerConnectionClient.destroyPeerConnectionFactory()
     }
 
@@ -255,14 +258,15 @@ actual fun createPeerConnectionClientFactory(
     config: PeerConnectionClientFactory.Config,
     errorHandler: (Int, String) -> Unit,
 ): PeerConnectionClientFactory {
+    val appContext = AndroidPeerConnectionClientFactory.sAppContext!!
     val privateConfig = config.privateConfig as AndroidPrivateConfig
     com.piasy.avconf.PeerConnectionClient.createPeerConnectionFactory(
-        AndroidPeerConnectionClientFactory.sAppContext!!,
+        appContext,
         privateConfig.rootEglBase,
         privateConfig.options,
         privateConfig.recordSamplesReadyCallback,
         privateConfig.trackSamplesReadyCallback,
         privateConfig.enableH264HighProfile,
     )
-    return AndroidPeerConnectionClientFactory(config, privateConfig, errorHandler)
+    return AndroidPeerConnectionClientFactory(config, errorHandler, appContext, privateConfig)
 }

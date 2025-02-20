@@ -2,7 +2,6 @@ package com.piasy.kmp.webrtc.android;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -27,12 +26,12 @@ import java.util.Collections;
 import java.util.List;
 
 import com.piasy.kmp.webrtc.AndroidPrivateConfig;
-import com.piasy.kmp.webrtc.IceCandidate;
+import com.piasy.kmp.webrtc.data.IceCandidate;
 import com.piasy.kmp.webrtc.PeerConnectionClient;
 import com.piasy.kmp.webrtc.PeerConnectionClientCallback;
 import com.piasy.kmp.webrtc.PeerConnectionClientFactory;
-import com.piasy.kmp.webrtc.RtcStatsReport;
-import com.piasy.kmp.webrtc.SessionDescription;
+import com.piasy.kmp.webrtc.data.RtcStatsReport;
+import com.piasy.kmp.webrtc.data.SessionDescription;
 import com.piasy.kmp.xlog.Logging;
 
 import kotlin.Unit;
