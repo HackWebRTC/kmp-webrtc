@@ -2,7 +2,7 @@
 
 KMP wrapper for WebRTC.
 
-![Maven Central Version](https://img.shields.io/maven-central/v/com.piasy/kmp-webrtc)
+![Maven Central Version](https://img.shields.io/maven-central/v/com.piasy/kmp-webrtc) ![Main branch status](https://github.com/HackWebRTC/kmp-webrtc/actions/workflows/ci.yaml/badge.svg?branch=main)
 
 ## Supported platforms
 
@@ -65,6 +65,39 @@ xcodegen
 pod install
 # open iosApp.xcworkspace in Xcode, and run it.
 ```
+
+## Build WebRTC
+
+### Android
+
+```bash
+# on Linux
+./sdk/build_android_libs.sh <output path> --skip-build-ffmpeg
+
+# on macOS, copy prebuilt_libs into sdk/android_gradle/webrtc/
+# then build aar like this:
+pushd ../webrtc_repo/webrtc_ios/src/sdk/android_gradle/ && \
+./gradlew :webrtc:assembleRelease && \
+cp webrtc/build/outputs/aar/webrtc-release.aar \
+  ../../../../../kmp-webrtc/libs/android/webrtc.aar && \
+popd
+```
+
+### iOS
+
+```bash
+pushd ../webrtc_repo/webrtc_ios/src/ && \
+./sdk/build_ios_framework.sh ../../../kmp-webrtc/libs --skip-build-ffmpeg && \
+popd
+```
+
+### Upload libs zip
+
+```bash
+zip -ry build/libs.zip libs
+```
+
+Then upload build/libs.zip to GitHub releases.
 
 ## Publish
 
