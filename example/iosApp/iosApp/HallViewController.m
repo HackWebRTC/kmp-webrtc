@@ -11,7 +11,6 @@
 #import "CallViewController.h"
 #import "ARDToast.h"
 
-@import SDAutoLayout;
 @import WebRTC;
 
 static NSString* const barButtonImageString = @"ic_settings_black_24dp.png";
@@ -22,57 +21,74 @@ static NSString* const barButtonImageString = @"ic_settings_black_24dp.png";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+
     self.title = @"kmp-webrtc";
     self.view.backgroundColor = [UIColor whiteColor];
     [self addSettingsBarButton];
-    
-    UIButton* create = [UIButton buttonWithType:UIButtonTypeSystem];
-    [create setTitle:@"loopback" forState:UIControlStateNormal];
-    create.titleLabel.font = [UIFont systemFontOfSize:20];
-    [self.view addSubview:create];
-    create.sd_layout.widthIs(180)
-        .heightIs(20)
-        .topSpaceToView(self.view, 30)
-        .centerXEqualToView(self.view);
-    
-    [create addTarget:self
-               action:@selector(onLoopback:)
-     forControlEvents:UIControlEventTouchUpInside];
 
-    UITableViewCell* audioOnlyCell =
-        [[UITableViewCell alloc] initWithFrame:CGRectZero];
-    audioOnlyCell.selectionStyle = UITableViewCellSelectionStyleNone;
-    _audioOnlySwitch = [[UISwitch alloc] initWithFrame:CGRectZero];
-    audioOnlyCell.accessoryView = _audioOnlySwitch;
-    audioOnlyCell.textLabel.text = @"Audio only";
-    [self.view addSubview:audioOnlyCell];
-    audioOnlyCell.sd_layout.widthIs(180)
-        .heightRatioToView(create, 1)
-        .topSpaceToView(create, 20)
-        .centerXEqualToView(self.view);
+    UIButton* loopback = [UIButton buttonWithType:UIButtonTypeSystem];
+    [loopback setTitle:@"loopback" forState:UIControlStateNormal];
+    [loopback addTarget:self
+                 action:@selector(onLoopback:)
+       forControlEvents:UIControlEventTouchUpInside];
+    loopback.titleLabel.font = [UIFont systemFontOfSize:20];
+
+    UIStackView *switchStackView = [[UIStackView alloc] init];
+    switchStackView.axis = UILayoutConstraintAxisHorizontal;
+    switchStackView.distribution = UIStackViewDistributionFillProportionally;
+    switchStackView.spacing = 10;
+    UILabel *switchLabel = [[UILabel alloc] init];
+    switchLabel.text = @"Audio only";
+    switchLabel.font = [UIFont systemFontOfSize:20];
+    [switchStackView addArrangedSubview:switchLabel];
+    _audioOnlySwitch = [[UISwitch alloc] init];
+    [switchStackView addArrangedSubview:_audioOnlySwitch];
 
     UIButton* shareLog = [UIButton buttonWithType:UIButtonTypeSystem];
     [shareLog setTitle:@"share log" forState:UIControlStateNormal];
-    shareLog.titleLabel.font = [UIFont systemFontOfSize:20];
-    [self.view addSubview:shareLog];
-    shareLog.sd_layout.widthIs(180)
-        .heightRatioToView(create, 1)
-        .topSpaceToView(audioOnlyCell, 20)
-        .centerXEqualToView(self.view);
-    
     [shareLog addTarget:self
                  action:@selector(onShareLog:)
        forControlEvents:UIControlEventTouchUpInside];
+    shareLog.titleLabel.font = [UIFont systemFontOfSize:20];
 
     UILabel* version = [[UILabel alloc] initWithFrame:CGRectZero];
     version.text = [NSString stringWithFormat:@"kmp-webrtc %@", [CFPeerConnectionClient versionName]];
-    version.textAlignment = NSTextAlignmentCenter;
-    [self.view addSubview:version];
-    version.sd_layout.widthIs(250)
-        .heightRatioToView(create, 1)
-        .topSpaceToView(shareLog, 10)
-        .centerXEqualToView(self.view);
+    version.font = [UIFont systemFontOfSize:20];
+
+    UIStackView *stackView = [[UIStackView alloc] init];
+    stackView.axis = UILayoutConstraintAxisVertical;
+    stackView.alignment = UIStackViewAlignmentLeading;
+    stackView.distribution = UIStackViewDistributionFillEqually;
+    stackView.spacing = 10;
+
+    [stackView addArrangedSubview:loopback];
+    [stackView addArrangedSubview:switchStackView];
+    [stackView addArrangedSubview:shareLog];
+    [stackView addArrangedSubview:version];
+    [self.view addSubview:stackView];
+
+    // 使用 Auto Layout 约束 StackView 的位置和大小
+    stackView.translatesAutoresizingMaskIntoConstraints = NO;
+    // 水平居中
+    NSLayoutConstraint *centerXConstraint =
+        [NSLayoutConstraint constraintWithItem:stackView
+                                     attribute:NSLayoutAttributeCenterX
+                                     relatedBy:NSLayoutRelationEqual
+                                        toItem:self.view
+                                     attribute:NSLayoutAttributeCenterX
+                                    multiplier:1.0
+                                      constant:0];
+    // 距离顶部 50
+    NSLayoutConstraint *topConstraint =
+        [NSLayoutConstraint constraintWithItem:stackView
+                                     attribute:NSLayoutAttributeTop
+                                     relatedBy:NSLayoutRelationEqual
+                                        toItem:self.view.safeAreaLayoutGuide
+                                     attribute:NSLayoutAttributeTop
+                                    multiplier:1.0
+                                      constant:50];
+    // 激活约束
+    [NSLayoutConstraint activateConstraints:@[centerXConstraint, topConstraint]];
 }
 
 - (void)viewDidAppear:(BOOL)animated {

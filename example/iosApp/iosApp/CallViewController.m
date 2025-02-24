@@ -30,7 +30,6 @@
 #import "ARDSettingsModel.h"
 #import "ARDToast.h"
 
-@import SDAutoLayout;
 @import WebRTC;
 @import kmp_webrtc;
 
@@ -40,25 +39,24 @@
 @implementation CallViewController {
     ARDSettingsModel* _settingsModel;
     bool _isLandscape;
-    
+
     Kmp_webrtcObjCPeerConnectionClientFactory* _pcClientFactory;
     id<Kmp_webrtcPeerConnectionClient> _pcClient;
     NSTimer* _statsTimer;
     CFAudioMixer* _mixer;
-    
-    UIView* _rootLayout;
+
     CFEAGLVideoView* _remoteRenderer;
     CFEAGLVideoView* _localRenderer;
-    
+
     UIButton* _leaveButton;
     UIButton* _recordButton;
     UIButton* _mixerButton;
     UIButton* _switchCameraButton;
-    
+
     bool _recording;
     bool _mixingMusic;
     bool _videoEnabled;
-    
+
     bool _sendLastFrame;
     bool _left;
 }
@@ -77,92 +75,8 @@
     : UIInterfaceOrientationMaskPortrait;
 }
 
-- (void)loadView {
-    CGSize fc = [UIScreen mainScreen].bounds.size;
-    CGFloat fcWidth = _isLandscape ? fc.height : fc.width;
-    CGFloat fcHeight = _isLandscape ? fc.width : fc.height;
-
-    self.view =
-    [[UIView alloc] initWithFrame:CGRectMake(0, 0, fcWidth, fcHeight)];
-
-    _rootLayout = [[UIView alloc] init];
-    [self.view addSubview:_rootLayout];
-    _rootLayout.sd_layout.widthRatioToView(self.view, 1)
-        .heightRatioToView(self.view, 1);
-
-    _recordButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [_recordButton setTitle:_recording ? @"stop record" : @"start record"
-                   forState:UIControlStateNormal];
-    _recordButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
-    [_recordButton addTarget:self
-                      action:@selector(onRecord:)
-            forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:_recordButton];
-    _recordButton.sd_layout.widthIs(120)
-        .heightIs(20)
-        .bottomSpaceToView(self.view, 30)
-        .leftSpaceToView(self.view, 10);
-
-    _mixerButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [_mixerButton setTitle:_mixingMusic ? @"stop mixer" : @"start mixer"
-                   forState:UIControlStateNormal];
-    _mixerButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
-    [_mixerButton addTarget:self
-                      action:@selector(onMixer:)
-            forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:_mixerButton];
-    _mixerButton.sd_layout.widthIs(120)
-        .heightIs(20)
-        .bottomEqualToView(_recordButton)
-        .leftSpaceToView(_recordButton, 10);
-
-    _leaveButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [_leaveButton setTitle:@"Leave" forState:UIControlStateNormal];
-    _leaveButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
-    [_leaveButton addTarget:self
-                     action:@selector(onLeaveCall:)
-           forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:_leaveButton];
-    _leaveButton.sd_layout.widthIs(80)
-        .heightIs(20)
-        .bottomEqualToView(_recordButton)
-        .leftSpaceToView(_mixerButton, 10);
-
-    _switchCameraButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [_switchCameraButton setTitle:@"FRONT" forState:UIControlStateNormal];
-    _switchCameraButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
-    [_switchCameraButton addTarget:self
-                            action:@selector(onSwitchCamera:)
-                  forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:_switchCameraButton];
-    _switchCameraButton.sd_layout.widthIs(80)
-        .heightIs(20)
-        .leftEqualToView(_recordButton)
-        .bottomSpaceToView(_recordButton, 20);
-
-    UIButton* videoButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [videoButton setTitle:@"Video" forState:UIControlStateNormal];
-    videoButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
-    [videoButton addTarget:self
-                    action:@selector(onToggleVideo:)
-          forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:videoButton];
-    videoButton.sd_layout.widthIs(80)
-        .heightIs(20)
-        .bottomEqualToView(_switchCameraButton)
-        .leftSpaceToView(_switchCameraButton, 10);
-
-    UIButton* sendLastFrameButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [sendLastFrameButton setTitle:@"SLF" forState:UIControlStateNormal];
-    sendLastFrameButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
-    [sendLastFrameButton addTarget:self
-                            action:@selector(onToggleSendLastFrame:)
-                  forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:sendLastFrameButton];
-    sendLastFrameButton.sd_layout.widthIs(80)
-        .heightIs(20)
-        .bottomEqualToView(_switchCameraButton)
-        .leftSpaceToView(videoButton, 10);
+- (void)viewDidLoad {
+    [super viewDidLoad];
 
     _localRenderer =
         [[CFEAGLVideoView alloc] initWithFrame:CGRectZero
@@ -180,19 +94,110 @@
     _remoteRenderer.autoresizingMask =
         UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 
-    UIView* wrapper = [[UIView alloc] init];
-    [_rootLayout insertSubview:wrapper atIndex:0];
-    wrapper.sd_layout.widthRatioToView(_rootLayout, 1)
-        .heightRatioToView(_rootLayout, 0.5)
-        .topEqualToView(_rootLayout);
-    [wrapper addSubview:_localRenderer];
+    UIView* localWrapper = [[UIView alloc] init];
+    [localWrapper addSubview:_localRenderer];
+    UIView* remoteWrapper = [[UIView alloc] init];
+    [remoteWrapper addSubview:_remoteRenderer];
 
-    wrapper = [[UIView alloc] init];
-    [_rootLayout insertSubview:wrapper atIndex:0];
-    wrapper.sd_layout.widthRatioToView(_rootLayout, 1)
-        .heightRatioToView(_rootLayout, 0.5)
-        .bottomEqualToView(_rootLayout);
-    [wrapper addSubview:_remoteRenderer];
+    UIStackView *mainStackView = [[UIStackView alloc] init];
+    mainStackView.axis = UILayoutConstraintAxisVertical;
+    mainStackView.distribution = UIStackViewDistributionFillEqually;
+    mainStackView.alignment = UIStackViewAlignmentFill;
+    mainStackView.spacing = 0;
+    mainStackView.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [mainStackView addArrangedSubview:localWrapper];
+    [mainStackView addArrangedSubview:remoteWrapper];
+    [self.view addSubview:mainStackView];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [mainStackView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [mainStackView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [mainStackView.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+        [mainStackView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
+    ]];
+
+    _recordButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [_recordButton setTitle:_recording ? @"stop record" : @"start record"
+                   forState:UIControlStateNormal];
+    _recordButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
+    [_recordButton addTarget:self
+                      action:@selector(onRecord:)
+            forControlEvents:UIControlEventTouchUpInside];
+
+    _mixerButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [_mixerButton setTitle:_mixingMusic ? @"stop mixer" : @"start mixer"
+                   forState:UIControlStateNormal];
+    _mixerButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
+    [_mixerButton addTarget:self
+                      action:@selector(onMixer:)
+            forControlEvents:UIControlEventTouchUpInside];
+
+    _leaveButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [_leaveButton setTitle:@"Leave" forState:UIControlStateNormal];
+    _leaveButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
+    [_leaveButton addTarget:self
+                     action:@selector(onLeaveCall:)
+           forControlEvents:UIControlEventTouchUpInside];
+
+    UIStackView *ops1 = [[UIStackView alloc] init];
+    ops1.axis = UILayoutConstraintAxisHorizontal;
+    ops1.distribution = UIStackViewDistributionFillEqually;
+    ops1.alignment = UIStackViewAlignmentFill;
+    ops1.spacing = 0;
+    ops1.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [ops1 addArrangedSubview:_recordButton];
+    [ops1 addArrangedSubview:_mixerButton];
+    [ops1 addArrangedSubview:_leaveButton];
+    [self.view addSubview:ops1];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [ops1.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [ops1.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [ops1.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+        [ops1.heightAnchor constraintGreaterThanOrEqualToConstant:30]
+    ]];
+
+    _switchCameraButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [_switchCameraButton setTitle:@"FRONT" forState:UIControlStateNormal];
+    _switchCameraButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
+    [_switchCameraButton addTarget:self
+                            action:@selector(onSwitchCamera:)
+                  forControlEvents:UIControlEventTouchUpInside];
+
+    UIButton* videoButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [videoButton setTitle:@"Video" forState:UIControlStateNormal];
+    videoButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
+    [videoButton addTarget:self
+                    action:@selector(onToggleVideo:)
+          forControlEvents:UIControlEventTouchUpInside];
+
+    UIButton* sendLastFrameButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [sendLastFrameButton setTitle:@"SLF" forState:UIControlStateNormal];
+    sendLastFrameButton.titleLabel.font = [UIFont systemFontOfSize:20.0];
+    [sendLastFrameButton addTarget:self
+                            action:@selector(onToggleSendLastFrame:)
+                  forControlEvents:UIControlEventTouchUpInside];
+
+    UIStackView *ops2 = [[UIStackView alloc] init];
+    ops2.axis = UILayoutConstraintAxisHorizontal;
+    ops2.distribution = UIStackViewDistributionFillEqually;
+    ops2.alignment = UIStackViewAlignmentFill;
+    ops2.spacing = 0;
+    ops2.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [ops2 addArrangedSubview:_switchCameraButton];
+    [ops2 addArrangedSubview:videoButton];
+    [ops2 addArrangedSubview:sendLastFrameButton];
+    [self.view addSubview:ops2];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [ops2.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [ops2.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [ops2.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-60],
+        [ops2.heightAnchor constraintGreaterThanOrEqualToConstant:30]
+    ]];
 
     [self startLoopback];
 }
