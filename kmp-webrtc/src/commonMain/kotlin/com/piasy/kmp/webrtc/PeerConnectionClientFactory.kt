@@ -56,17 +56,15 @@ abstract class PeerConnectionClientFactory(
 
     abstract fun startVideoCapture()
     abstract fun stopVideoCapture()
-    abstract fun switchCamera(onFinished: (Boolean) -> Unit)
+    open fun switchCamera(onFinished: (Boolean) -> Unit) {
+        onFinished(true)
+    }
 
     fun toggleSpeaker(speakerOn: Boolean) {
         audioDeviceManager.setSpeakerphoneOn(speakerOn)
     }
 
-    abstract fun adaptVideoOutputFormat(
-        width: Int,
-        height: Int,
-        fps: Int
-    )
+    abstract fun adaptVideoOutputFormat(width: Int, height: Int, fps: Int)
 
     open fun destroyPeerConnectionFactory() {
         audioDeviceManager.stop()

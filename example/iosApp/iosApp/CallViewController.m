@@ -40,7 +40,7 @@
     ARDSettingsModel* _settingsModel;
     bool _isLandscape;
 
-    Kmp_webrtcObjCPeerConnectionClientFactory* _pcClientFactory;
+    Kmp_webrtcIOSPeerConnectionClientFactory* _pcClientFactory;
     id<Kmp_webrtcPeerConnectionClient> _pcClient;
     NSTimer* _statsTimer;
     CFAudioMixer* _mixer;
@@ -354,9 +354,9 @@
                  videoCaptureFps:30
                   initCameraFace:0
                    privateConfig:privateConfig];
-    _pcClientFactory = (Kmp_webrtcObjCPeerConnectionClientFactory*)
-    [Kmp_webrtcObjCPeerConnectionClientFactoryKt createPeerConnectionClientFactoryConfig:pcClientFactoryConfig
-                                                                            errorHandler:^(Kmp_webrtcInt * _Nonnull code, NSString * _Nonnull msg) {
+    _pcClientFactory = (Kmp_webrtcIOSPeerConnectionClientFactory*)
+    [Kmp_webrtcIOSPeerConnectionClientFactoryKt createPeerConnectionClientFactoryConfig:pcClientFactoryConfig
+                                                                           errorHandler:^(Kmp_webrtcInt * _Nonnull code, NSString * _Nonnull msg) {
         NSLog(@"XXPXX PCFactory errorHandler %@ %@", code, msg);
     }];
 

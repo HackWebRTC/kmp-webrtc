@@ -12,6 +12,7 @@ local.properties
 xcuserdata
 **.podspec
 **.xcodeproj
+**.xcworkspace
 Podfile.lock
 Pods
 

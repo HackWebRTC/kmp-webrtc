@@ -17,6 +17,8 @@ kotlin {
         iosArm64() to "ios-arm64",
         iosSimulatorArm64() to "ios-arm64_x86_64-simulator",
         iosX64() to "ios-arm64_x86_64-simulator",
+        macosX64() to "macos-arm64_x86_64",
+        macosArm64() to "macos-arm64_x86_64",
     )
     appleTargets.keys.forEach {
         it.compilations.getByName("main").cinterops {
@@ -35,6 +37,7 @@ kotlin {
         homepage = "https://github.com/HackWebRTC/kmp-webrtc"
         version = Consts.releaseVersion
         ios.deploymentTarget = libs.versions.iosDeploymentTarget.get()
+        osx.deploymentTarget = "11.0"
         podfile = project.file("../example/iosApp/Podfile")
         framework {
             baseName = "kmp_webrtc"

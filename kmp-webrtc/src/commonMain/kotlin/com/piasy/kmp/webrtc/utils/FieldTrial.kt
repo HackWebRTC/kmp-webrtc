@@ -1,5 +1,8 @@
 package com.piasy.kmp.webrtc.utils
 
+/**
+ * Created by Piasy{github.com/Piasy} on 2025-02-13.
+ */
 internal object FieldTrial {
     fun fieldTrialsStringToMap(fieldTrials: String): Map<Any?, *> {
         val map = HashMap<Any?, String>()

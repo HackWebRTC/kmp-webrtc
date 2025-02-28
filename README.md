@@ -60,10 +60,15 @@ Open the project (the repo root dir) in Android studio, and run the example.andr
 ### iOS
 
 ```bash
-cd example/iosApp
-xcodegen
-pod install
-# open iosApp.xcworkspace in Xcode, and run it.
+./scripts/setup_apple.sh
+# open example/iosApp/iosApp.xcworkspace in Xcode, and run it.
+```
+
+### macOS
+
+```bash
+./scripts/setup_apple.sh
+# open example/macApp/macApp.xcworkspace in Xcode, and run it.
 ```
 
 ## Build WebRTC
@@ -83,11 +88,11 @@ cp webrtc/build/outputs/aar/webrtc-release.aar \
 popd
 ```
 
-### iOS
+### Apple
 
 ```bash
 pushd ../webrtc_repo/webrtc_ios/src/ && \
-./sdk/build_ios_framework.sh ../../../kmp-webrtc/libs --skip-build-ffmpeg && \
+./sdk/build_apple_framework.sh ../../../kmp-webrtc/libs --skip-build-ffmpeg && \
 popd
 ```
 

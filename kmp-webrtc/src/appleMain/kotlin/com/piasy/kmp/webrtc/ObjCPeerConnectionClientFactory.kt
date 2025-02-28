@@ -12,14 +12,13 @@ data class ObjCPrivateConfig(
     internal val pcFactoryOption: CFPeerConnectionFactoryOption,
 ) : PeerConnectionClientFactory.PrivateConfig()
 
-class ObjCPeerConnectionClientFactory(
+abstract class ObjCPeerConnectionClientFactory(
     config: Config,
     errorHandler: (Int, String) -> Unit,
-) : PeerConnectionClientFactory(config, errorHandler, IOSAudioDeviceManager()) {
+    audioDeviceManager: AudioDeviceManager,
+) : PeerConnectionClientFactory(config, errorHandler, audioDeviceManager) {
     private var cameraCapturer: RTCCameraVideoCapturer? = null
-    private var cameraCaptureController: CFCaptureController? = null
-    private var screenCapturer: CFRPCapturer? = null
-    private var isFrontCamera = false
+    protected var cameraCaptureController: CFCaptureController? = null
 
     override fun createPeerConnectionClient(
         peerUid: String,
@@ -28,11 +27,9 @@ class ObjCPeerConnectionClientFactory(
         videoMaxBitrate: Int,
         videoMaxFrameRate: Int,
         callback: PeerConnectionClientCallback
-    ): PeerConnectionClient {
-        return ObjCPeerConnectionClient(
-            peerUid, dir, hasVideo, videoMaxBitrate, videoMaxFrameRate, callback
-        )
-    }
+    ) = ObjCPeerConnectionClient(
+        peerUid, dir, hasVideo, videoMaxBitrate, videoMaxFrameRate, callback
+    )
 
     override fun createLocalTracks() {
         // OWT requires video in SDP, so must have video track
@@ -41,28 +38,11 @@ class ObjCPeerConnectionClientFactory(
             return
         }
 
-        val hijackCapturerDelegate = CFPeerConnectionClient.getHijackCapturerDelegate()
-        if (config.screenShare) {
-            val screenCaptureErrorHandler: ((String?) -> Unit) = { error ->
-                logE("screenCaptureError $error")
-                errorHandler(ERR_SCREEN_CAPTURER_FAIL, error ?: "")
-            }
-            screenCapturer = CFRPCapturer(
-                hijackCapturerDelegate, screenCaptureErrorHandler, config.videoCaptureHeight, false,
-                config.videoCaptureFps
-            )
-        } else {
-            cameraCapturer = RTCCameraVideoCapturer(hijackCapturerDelegate)
+        if (!config.screenShare) {
+            cameraCapturer = RTCCameraVideoCapturer(CFPeerConnectionClient.getHijackCapturerDelegate())
             cameraCaptureController = CFCaptureController(
                 cameraCapturer!!, config.initCameraFace, config.videoCaptureWidth, config.videoCaptureHeight
             )
-            isFrontCamera = config.initCameraFace == Config.CAMERA_FACE_FRONT
-        }
-    }
-
-    override fun addLocalTrackRenderer(renderer: Any) {
-        if (renderer is RTCVideoRendererProtocol) {
-            CFPeerConnectionClient.addLocalTrackRenderer(renderer)
         }
     }
 
@@ -72,30 +52,19 @@ class ObjCPeerConnectionClientFactory(
                 errorHandler(ERR_CAMERA_CAPTURER_FAIL, it.localizedDescription)
             }
         }
-        screenCapturer?.startCapture()
     }
 
     override fun stopVideoCapture() {
         cameraCaptureController?.stopCapture()
-        screenCapturer?.stopCapture()
     }
 
-    override fun switchCamera(onFinished: (Boolean) -> Unit) {
-        isFrontCamera = !isFrontCamera
-        cameraCaptureController?.switchCamera {
-            if (it != null) {
-                errorHandler(ERR_CAMERA_CAPTURER_FAIL, it.localizedDescription)
-            } else {
-                onFinished(isFrontCamera)
-            }
+    override fun addLocalTrackRenderer(renderer: Any) {
+        if (renderer is RTCVideoRendererProtocol) {
+            CFPeerConnectionClient.addLocalTrackRenderer(renderer)
         }
     }
 
-    override fun adaptVideoOutputFormat(
-        width: Int,
-        height: Int,
-        fps: Int
-    ) {
+    override fun adaptVideoOutputFormat(width: Int, height: Int, fps: Int) {
         CFPeerConnectionClient.adaptVideoOutputFormat(width, height, fps)
     }
 
@@ -131,12 +100,4 @@ actual fun initializeWebRTC(context: Any?, fieldTrials: String, debugLog: Boolea
     Logging.info(PeerConnectionClientFactory.TAG, "initialize ${CFPeerConnectionClient.versionName()}")
     PeerConnectionClientFactory.sInitialized = true
     return true
-}
-
-actual fun createPeerConnectionClientFactory(
-    config: PeerConnectionClientFactory.Config,
-    errorHandler: (Int, String) -> Unit,
-): PeerConnectionClientFactory {
-    CFPeerConnectionClient.createPeerConnectionFactory((config.privateConfig as ObjCPrivateConfig).pcFactoryOption)
-    return ObjCPeerConnectionClientFactory(config, errorHandler)
 }

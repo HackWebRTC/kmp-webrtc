@@ -23,7 +23,10 @@ jobs:
             os: macos-latest
           - cmd: "./gradlew :example:androidApp:assembleDebug"
             os: macos-latest
-          - cmd: "./gradlew :kmp-webrtc:podspec :kmp-webrtc:generateDummyFramework && cd example/iosApp && xcodegen && pod install && xcodebuild -workspace iosApp.xcworkspace -scheme iosApp -sdk iphonesimulator -configuration Debug"
+          - cmd: "./scripts/build_ios_demo.sh"
+            os: macos-latest
+            dep: "brew update && brew install cocoapods xcodegen"
+          - cmd: "./scripts/build_mac_demo.sh"
             os: macos-latest
             dep: "brew update && brew install cocoapods xcodegen"
     runs-on: ${{ matrix.os }}
