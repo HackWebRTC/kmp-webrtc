@@ -2,7 +2,7 @@
 
 set -e
 
-./gradlew :kmp-webrtc:podPublishReleaseXCFramework
+./gradlew :kmp-webrtc:podspec :kmp-webrtc:generateDummyFramework :kmp-webrtc:podPublishReleaseXCFramework
 
 pushd example/iosApp
 xcodegen

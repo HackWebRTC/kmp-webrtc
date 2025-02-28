@@ -8,5 +8,5 @@ pushd example/macApp
 xcodebuild -workspace macApp.xcworkspace \
     -scheme macApp \
     -sdk macosx \
-    -configuration Debug
+    -configuration Debug ARCHS="x86_64" ONLY_ACTIVE_ARCH=NO
 popd
