@@ -146,7 +146,7 @@ class AndroidPeerConnectionClientFactory(
                 }
             }
 
-            config.videoCaptureImpl == Config.VIDEO_CAPTURE_IMPL_APP -> {
+            config.videoCaptureImpl == VIDEO_CAPTURE_IMPL_APP -> {
                 return YuvCapturer()
             }
 
@@ -164,7 +164,7 @@ class AndroidPeerConnectionClientFactory(
         logI("createCapturer: Looking for front facing cameras")
         for (deviceName in deviceNames) {
             if (enumerator.isFrontFacing(deviceName)
-                && config.initCameraFace == Config.CAMERA_FACE_FRONT
+                && config.initCameraFace == CAMERA_FACE_FRONT
             ) {
                 logI("Creating front facing camera capturer")
                 val videoCapturer = enumerator.createCapturer(deviceName, cameraEventsHandler)

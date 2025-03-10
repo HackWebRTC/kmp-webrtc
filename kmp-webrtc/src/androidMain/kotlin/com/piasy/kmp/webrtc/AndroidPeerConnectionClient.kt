@@ -242,7 +242,7 @@ private fun fromWebRTCStatsReport(report: RTCStatsReport): RtcStatsReport {
         stats[key] = fromStats(value)
     }
 
-    return RtcStatsReport(report.timestampUs, stats)
+    return RtcStatsReport(report.timestampUs.toLong(), stats)
 }
 
 private fun fromStats(stats: org.webrtc.RTCStats): RtcStats {
@@ -252,5 +252,5 @@ private fun fromStats(stats: org.webrtc.RTCStats): RtcStats {
         members[key] = value.toString()
     }
 
-    return RtcStats(stats.id, stats.type, stats.timestampUs, members)
+    return RtcStats(stats.id, stats.type, stats.timestampUs.toLong(), members)
 }

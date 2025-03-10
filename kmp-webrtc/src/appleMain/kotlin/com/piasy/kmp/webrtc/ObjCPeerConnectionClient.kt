@@ -213,7 +213,7 @@ private fun fromWebRTCStatsReport(report: RTCStatisticsReport): RtcStatsReport {
         }
     }
 
-    return RtcStatsReport(report.timestamp_us, stats)
+    return RtcStatsReport(report.timestamp_us.toLong(), stats)
 }
 
 private fun fromStats(stats: RTCStatistics): RtcStats {
@@ -225,5 +225,5 @@ private fun fromStats(stats: RTCStatistics): RtcStats {
         }
     }
 
-    return RtcStats(stats.id, stats.type, stats.timestamp_us, members)
+    return RtcStats(stats.id, stats.type, stats.timestamp_us.toLong(), members)
 }
