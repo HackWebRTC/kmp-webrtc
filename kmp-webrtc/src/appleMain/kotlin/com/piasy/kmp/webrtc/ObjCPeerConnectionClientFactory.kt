@@ -21,11 +21,8 @@ abstract class ObjCPeerConnectionClientFactory(
     protected var cameraCaptureController: CFCaptureController? = null
 
     override fun createPeerConnectionClient(
-        peerUid: String,
-        dir: Int,
-        hasVideo: Boolean,
-        videoMaxBitrate: Int,
-        videoMaxFrameRate: Int,
+        peerUid: String, dir: Int, hasVideo: Boolean,
+        videoMaxBitrate: Int, videoMaxFrameRate: Int,
         callback: PeerConnectionClientCallback
     ) = ObjCPeerConnectionClient(
         peerUid, dir, hasVideo, videoMaxBitrate, videoMaxFrameRate, callback
@@ -33,8 +30,10 @@ abstract class ObjCPeerConnectionClientFactory(
 
     override fun createLocalTracks() {
         // OWT requires video in SDP, so must have video track
-        if (CFPeerConnectionClient.createLocalTracks(true, config.screenShare) != 0) {
-            logE("createLocalTracks fail: CFPeerConnectionClient.createLocalTracks fail")
+        val res = CFPeerConnectionClient.createLocalTracks(true, config.screenShare)
+        if (res != 0) {
+            logE("createLocalTracks fail: CFPeerConnectionClient.createLocalTracks fail, res $res")
+            errorHandler(ERR_CREATE_LOCAL_TRACKS_FAIL, "res: $res")
             return
         }
 
@@ -72,6 +71,10 @@ abstract class ObjCPeerConnectionClientFactory(
         super.destroyPeerConnectionFactory()
         CFPeerConnectionClient.destroyPeerConnectionFactory()
     }
+
+    companion object {
+        internal val logger = RTCCallbackLogger()
+    }
 }
 
 actual fun initializeWebRTC(context: Any?, fieldTrials: String, debugLog: Boolean): Boolean {
@@ -83,7 +86,13 @@ actual fun initializeWebRTC(context: Any?, fieldTrials: String, debugLog: Boolea
         return true
     }
     initializeMarsXLog(if (debugLog) Logging.LEVEL_DEBUG else Logging.LEVEL_INFO, "webrtc", debugLog)
-    RTCCallbackLogger().startWithMessageAndSeverityHandler { log, severity ->
+    ObjCPeerConnectionClientFactory.logger.severity = if (debugLog) {
+        RTCLoggingSeverity.RTCLoggingSeverityVerbose
+    } else {
+        RTCLoggingSeverity.RTCLoggingSeverityInfo
+    }
+    // only WebRTC Android have tag for log callback
+    ObjCPeerConnectionClientFactory.logger.startWithMessageAndSeverityHandler { log, severity ->
         if (log == null) {
             return@startWithMessageAndSeverityHandler
         }

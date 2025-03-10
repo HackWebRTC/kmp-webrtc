@@ -66,11 +66,8 @@ class AndroidPeerConnectionClientFactory(
     }
 
     override fun createPeerConnectionClient(
-        peerUid: String,
-        dir: Int,
-        hasVideo: Boolean,
-        videoMaxBitrate: Int,
-        videoMaxFrameRate: Int,
+        peerUid: String, dir: Int, hasVideo: Boolean,
+        videoMaxBitrate: Int, videoMaxFrameRate: Int,
         callback: PeerConnectionClientCallback
     ): PeerConnectionClient {
         return AndroidPeerConnectionClient(
@@ -212,11 +209,15 @@ class AndroidPeerConnectionClientFactory(
 
     companion object {
         internal var sAppContext: Context? = null
+
+        // only WebRTC Android have tag for log callback
         internal val loggable: Loggable = Loggable { message, severity, tag ->
             when (severity) {
-                org.webrtc.Logging.Severity.LS_ERROR -> Logging.error(tag, message)
-                org.webrtc.Logging.Severity.LS_INFO -> Logging.info(tag, message)
                 org.webrtc.Logging.Severity.LS_VERBOSE -> Logging.debug(tag, message)
+                org.webrtc.Logging.Severity.LS_INFO, org.webrtc.Logging.Severity.LS_WARNING
+                    -> Logging.info(tag, message)
+
+                org.webrtc.Logging.Severity.LS_ERROR -> Logging.error(tag, message)
                 else -> {}
             }
         }
@@ -247,7 +248,8 @@ actual fun initializeWebRTC(context: Any?, fieldTrials: String, debugLog: Boolea
     )
 
     com.piasy.avconf.PeerConnectionClient.initialize(
-        appContext, fieldTrials, AndroidPeerConnectionClientFactory.loggable
+        appContext, fieldTrials, AndroidPeerConnectionClientFactory.loggable,
+        if (debugLog) org.webrtc.Logging.Severity.LS_VERBOSE else org.webrtc.Logging.Severity.LS_INFO
     )
     Logging.info(PeerConnectionClientFactory.TAG, "initialize ${BuildConfig.VERSION_NAME}")
     PeerConnectionClientFactory.sInitialized = true

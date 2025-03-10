@@ -29,6 +29,8 @@ jobs:
           - cmd: "./scripts/build_mac_demo.sh"
             os: macos-latest
             dep: "brew update && brew install cocoapods xcodegen"
+          - cmd: ".\\scripts\\setup_windows.bat && cd example\\winApp && msbuild winApp.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64"
+            os: windows-latest
     runs-on: ${{ matrix.os }}
     permissions:
       pull-requests: write
@@ -50,6 +52,11 @@ jobs:
         with:
           url: "https://github.com/HackWebRTC/kmp-webrtc/releases/latest/download/libs.zip"
           target: ./
+      - name: Setup MSBuild
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: "2022"
       - if: ${{ matrix.dep }}
         run: ${{ matrix.dep }}
       - name: Extract libs

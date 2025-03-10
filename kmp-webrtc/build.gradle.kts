@@ -58,7 +58,24 @@ kotlin {
 //        }
 //        binaries.executable()
 //    }
-//    mingwX64 {}
+    mingwX64 {
+        compilations.getByName("main").cinterops {
+            val webrtc by creating {
+                definitionFile.set(project.file("src/cppCommon/cinterop/WebRTC.def"))
+                includeDirs {
+                    allHeaders("${rootProject.projectDir}/libs/windows_linux/include")
+                }
+            }
+        }
+        binaries {
+            all {
+                linkerOpts.addAll(listOf("-L${rootProject.projectDir}/libs/windows/x64", "-lwin_pc_client.dll",))
+            }
+            sharedLib {
+                baseName = "kmp_webrtc"
+            }
+        }
+    }
 //    linuxX64 {}
 
     applyDefaultHierarchyTemplate()
@@ -98,6 +115,17 @@ kotlin {
 //            dependencies {
 //            }
 //        }
+
+        val cppCommon by creating {
+            dependsOn(commonMain.get())
+        }
+
+//        linuxMain {
+//            dependsOn(cppCommon)
+//        }
+        mingwMain {
+            dependsOn(cppCommon)
+        }
     }
 }
 

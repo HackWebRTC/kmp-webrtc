@@ -8,7 +8,7 @@ import WebRTC.*
 class MacPeerConnectionClientFactory(
     config: Config,
     errorHandler: (Int, String) -> Unit,
-) : ObjCPeerConnectionClientFactory(config, errorHandler, MacAudioDeviceManager())
+) : ObjCPeerConnectionClientFactory(config, errorHandler, DummyAudioDeviceManager())
 
 actual fun createPeerConnectionClientFactory(
     config: PeerConnectionClientFactory.Config,

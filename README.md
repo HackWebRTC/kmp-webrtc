@@ -8,13 +8,12 @@ KMP wrapper for WebRTC.
 
 |      Platform      | 🛠Builds🛠 + 🔬Tests🔬 |
 | :----------------: | :------------------: |
-|      `JVM` 17      |          🔮          |
-| `JS`     (Chrome)  |          🔮          |
-| `WasmJS` (Chrome)  |          🔮          |
 |     `Android`      |          🚀          |
 |       `iOS`        |          🚀          |
-|      `macOS`       |          🔮          |
-|   `Windows X64`    |          🔮          |
+|      `macOS`       |          🚀          |
+|   `Windows X64`    |          🚀          |
+| `JS`     (Chrome)  |          🔮          |
+| `WasmJS` (Chrome)  |          🔮          |
 |    `Linux X64`     |          🔮          |
 
 ## Dependency
@@ -41,6 +40,15 @@ kotlin {
 
 ## Env Setup
 
+Download and extract the `libs` dir:
+
+```bash
+wget https://github.com/HackWebRTC/kmp-webrtc/releases/latest/download/libs.zip
+unzip -o libs.zip
+```
+
+### macOS
+
 You need to install [RVM](https://rvm.io/) to manage your ruby version, and install gems. You need to use homebrew to install the following tools:
 
 ```bash
@@ -50,6 +58,10 @@ brew install cocoapods xcodegen
 ```
 
 You may need to restart your system so that Android Studio could use the correct ruby.
+
+### Windows
+
+Follow [this guide](https://chromium.googlesource.com/chromium/src/+/master/docs/windows_build_instructions.md) to install Visual Studio 2022 and necessary tools.
 
 ## Example
 
@@ -71,9 +83,36 @@ Open the project (the repo root dir) in Android studio, and run the example.andr
 # open example/macApp/macApp.xcworkspace in Xcode, and run it.
 ```
 
+### Windows
+
+```bash
+.\scripts\setup_windows.bat
+# open example\winApp\winApp.sln in Visual Studio 2022, and run it.
+```
+
 ## Build WebRTC
 
+[hack_webrtc_43659 branch of HackWebRTC/webrtc](https://github.com/HackWebRTC/webrtc/tree/hack_webrtc_43659), which is based on m133.
+
+File structure for macOS:
+
+```
+- webrtc_apple
+    - src
+- kmp-webrtc
+```
+
+File structure for Windows:
+
+```
+- webrtc_windows
+    - src
+- kmp-webrtc
+```
+
 ### Android
+
+CPP code need to be built on Linux.
 
 ```bash
 # on Linux
@@ -81,19 +120,27 @@ Open the project (the repo root dir) in Android studio, and run the example.andr
 
 # on macOS, copy prebuilt_libs into sdk/android_gradle/webrtc/
 # then build aar like this:
-pushd ../webrtc_repo/webrtc_ios/src/sdk/android_gradle/ && \
+pushd ../webrtc_apple/src/sdk/android_gradle/ && \
 ./gradlew :webrtc:assembleRelease && \
 cp webrtc/build/outputs/aar/webrtc-release.aar \
-  ../../../../../kmp-webrtc/libs/android/webrtc.aar && \
+  ../../../../kmp-webrtc/libs/android/webrtc.aar && \
 popd
 ```
 
 ### Apple
 
 ```bash
-pushd ../webrtc_repo/webrtc_ios/src/ && \
-./sdk/build_apple_framework.sh ../../../kmp-webrtc/libs --skip-build-ffmpeg && \
+pushd ../webrtc_apple/src/ && \
+./sdk/build_apple_framework.sh ../../kmp-webrtc/libs --skip-build-ffmpeg && \
 popd
+```
+
+### Windows
+
+In `x64 Native Tools Command Prompt for VS 2022`:
+
+```bash
+.\sdk\build_windows_libs.bat ..\..\kmp-webrtc
 ```
 
 ### Upload libs zip
@@ -112,3 +159,7 @@ Maven central portal credentials and signing configs are set in `~/.gradle/gradl
 ```
 
 Login to https://central.sonatype.com/publishing/deployments, and release them manually.
+
+## Other projects
+
+- [shepeliev/webrtc-kmp](https://github.com/shepeliev/webrtc-kmp)
