@@ -56,7 +56,7 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         uses: microsoft/setup-msbuild@v2
         with:
-          vs-version: "2022"
+          msbuild-architecture: x64
       - if: ${{ matrix.dep }}
         run: ${{ matrix.dep }}
       - name: Extract libs
