@@ -3,7 +3,7 @@
 if "%~1"=="" (
     set "LIB_EXE=lib"
 ) else (
-    set "LIB_EXE=%~1"
+    set "LIB_EXE=%1"
 )
 
 .\gradlew :kmp-webrtc:linkReleaseSharedMingwX64 && ^
