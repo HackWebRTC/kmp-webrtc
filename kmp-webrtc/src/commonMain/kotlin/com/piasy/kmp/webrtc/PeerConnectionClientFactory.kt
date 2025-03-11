@@ -20,15 +20,6 @@ abstract class PeerConnectionClientFactory(
     ) {
         internal val screenShare: Boolean
             get() = videoCaptureImpl == VIDEO_CAPTURE_IMPL_SCREEN
-
-        companion object {
-            const val VIDEO_CAPTURE_IMPL_SYSTEM_CAMERA = 1
-            const val VIDEO_CAPTURE_IMPL_SCREEN = 2
-            const val VIDEO_CAPTURE_IMPL_APP = 4
-
-            const val CAMERA_FACE_FRONT = 0
-            const val CAMERA_FACE_BACK = 1
-        }
     }
 
     open class PrivateConfig
@@ -42,11 +33,8 @@ abstract class PeerConnectionClientFactory(
     }
 
     abstract fun createPeerConnectionClient(
-        peerUid: String,
-        dir: Int,
-        hasVideo: Boolean,
-        videoMaxBitrate: Int,
-        videoMaxFrameRate: Int,
+        peerUid: String, dir: Int, hasVideo: Boolean,
+        videoMaxBitrate: Int, videoMaxFrameRate: Int,
         callback: PeerConnectionClientCallback
     ): PeerConnectionClient
 
@@ -82,8 +70,22 @@ abstract class PeerConnectionClientFactory(
         internal const val TAG = "PCClientFactory"
         internal var sInitialized = false
 
+        const val DIR_SEND_RECV = 0
+        const val DIR_SEND_ONLY = 1
+        const val DIR_RECV_ONLY = 2
+        const val DIR_INACTIVE = 3
+
+        const val VIDEO_CAPTURE_IMPL_SYSTEM_CAMERA = 1
+        const val VIDEO_CAPTURE_IMPL_SCREEN = 2
+        const val VIDEO_CAPTURE_IMPL_FILE = 3
+        const val VIDEO_CAPTURE_IMPL_APP = 4
+
+        const val CAMERA_FACE_FRONT = 0
+        const val CAMERA_FACE_BACK = 1
+
         // peer connection fail
         const val ERR_PC_FAIL = 1001
+        const val ERR_CREATE_LOCAL_TRACKS_FAIL = 1002
 
         // create video capturer fail
         const val ERR_VIDEO_CAPTURER_CREATE_FAIL = 1101

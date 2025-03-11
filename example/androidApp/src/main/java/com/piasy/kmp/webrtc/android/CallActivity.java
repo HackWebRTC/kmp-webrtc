@@ -279,8 +279,8 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
             getLifecycle(), eglBase, options, true, null, null, null
     );
     PeerConnectionClientFactory.Config config = new PeerConnectionClientFactory.Config(
-            PeerConnectionClientFactory.Config.VIDEO_CAPTURE_IMPL_SYSTEM_CAMERA,
-            videoWidth, videoHeight, videoFps, PeerConnectionClientFactory.Config.CAMERA_FACE_FRONT,
+            PeerConnectionClientFactory.VIDEO_CAPTURE_IMPL_SYSTEM_CAMERA,
+            videoWidth, videoHeight, videoFps, PeerConnectionClientFactory.CAMERA_FACE_FRONT,
             privateConfig
     );
     pcClientFactory = createPeerConnectionClientFactory(config, new Function2<Integer, String, Unit>() {

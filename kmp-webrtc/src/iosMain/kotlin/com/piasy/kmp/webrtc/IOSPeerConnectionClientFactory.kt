@@ -25,7 +25,7 @@ class IOSPeerConnectionClientFactory(
                 config.videoCaptureHeight, false, config.videoCaptureFps
             )
         } else {
-            isFrontCamera = config.initCameraFace == Config.CAMERA_FACE_FRONT
+            isFrontCamera = config.initCameraFace == CAMERA_FACE_FRONT
         }
     }
 

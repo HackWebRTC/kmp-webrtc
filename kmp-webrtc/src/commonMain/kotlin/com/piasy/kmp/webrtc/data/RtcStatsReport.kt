@@ -1,5 +1,6 @@
 package com.piasy.kmp.webrtc.data
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -7,7 +8,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class RtcStatsReport(
-  val timestamp_us: Double,
+  @SerialName("timestamp_us") val timestampUs: Long,
   val stats: Map<String, RtcStats>
 )
 
@@ -15,6 +16,6 @@ data class RtcStatsReport(
 data class RtcStats(
   val id: String,
   val type: String,
-  val timestamp_us: Double,
+  @SerialName("timestamp_us") val timestampUs: Long,
   val members: Map<String, String>
 )

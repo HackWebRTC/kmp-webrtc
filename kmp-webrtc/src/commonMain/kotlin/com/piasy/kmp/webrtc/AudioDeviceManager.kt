@@ -4,27 +4,38 @@ package com.piasy.kmp.webrtc
  * Created by Piasy{github.com/Piasy} on 2019-11-27.
  */
 interface AudioDeviceManager {
-  fun setSpeakerphoneOn(speakerOn: Boolean)
+    fun setSpeakerphoneOn(speakerOn: Boolean)
 
-  fun start(callback: AudioDeviceManagerCallback)
+    fun start(callback: AudioDeviceManagerCallback)
 
-  fun stop()
+    fun stop()
 }
 
 enum class AudioDevice {
-  SPEAKER_PHONE,
-  WIRED_HEADSET,
-  EARPIECE,
-  BLUETOOTH,
-  NONE,
+    SPEAKER_PHONE,
+    WIRED_HEADSET,
+    EARPIECE,
+    BLUETOOTH,
+    NONE,
 }
 
 enum class SpeakerphoneMode {
-  AUTO,
-  OPEN,
-  CLOSE,
+    AUTO,
+    OPEN,
+    CLOSE,
 }
 
 interface AudioDeviceManagerCallback {
-  fun onAudioDeviceChanged(device: AudioDevice)
+    fun onAudioDeviceChanged(device: AudioDevice)
+}
+
+class DummyAudioDeviceManager : AudioDeviceManager {
+    override fun setSpeakerphoneOn(speakerOn: Boolean) {
+    }
+
+    override fun start(callback: AudioDeviceManagerCallback) {
+    }
+
+    override fun stop() {
+    }
 }

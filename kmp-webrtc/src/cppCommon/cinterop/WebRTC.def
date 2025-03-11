@@ -1,0 +1,3 @@
+headers = lib_pc_client.h
+headerFilter = *
+compilerOpts.mingw = -DWEBRTC_WIN=1
