@@ -29,8 +29,9 @@ jobs:
           - cmd: "./scripts/build_mac_demo.sh"
             os: macos-latest
             dep: "brew update && brew install cocoapods xcodegen"
-          - cmd: ".\\scripts\\setup_windows.bat && cd example\\winApp && msbuild winApp.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64"
+          - cmd: "echo \"C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Tools\\MSVC\\14.43.34808\\bin\\Hostx64\\x64\" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8 && .\\scripts\\setup_windows.bat && cd example\\winApp && msbuild winApp.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64"
             os: windows-latest
+            dep: "dir C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Tools\\MSVC"
     runs-on: ${{ matrix.os }}
     permissions:
       pull-requests: write
