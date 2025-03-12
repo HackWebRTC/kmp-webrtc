@@ -371,7 +371,7 @@
     _pcClient = [_pcClientFactory createPeerConnectionClientPeerUid:@"test"
                                                                dir:0
                                                           hasVideo:YES
-                                                   videoMaxBitrate:[[_settingsModel currentMaxBitrateSettingFromStore] intValue]
+                                                videoMaxBitrateBps:[[_settingsModel currentMaxBitrateSettingFromStore] intValue]
                                                  videoMaxFrameRate:30
                                                           callback:self];
 

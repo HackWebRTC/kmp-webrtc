@@ -12,18 +12,14 @@ data class WinPrivateConfig(
 
 class WinPeerConnectionClientFactory(
     config: Config,
-    errorHandler: (Int, String) -> Unit
+    errorHandler: (Int, String) -> Unit,
 ) : CppPeerConnectionClientFactory(config, errorHandler) {
 
     override fun createPeerConnectionClient(
         peerUid: String, dir: Int, hasVideo: Boolean,
-        videoMaxBitrate: Int, videoMaxFrameRate: Int,
+        videoMaxBitrateBps: Int, videoMaxFrameRate: Int,
         callback: PeerConnectionClientCallback
-    ): PeerConnectionClient {
-        return WinPeerConnectionClient(
-            peerUid, dir, hasVideo, videoMaxBitrate, videoMaxFrameRate, callback
-        )
-    }
+    ) = WinPeerConnectionClient(peerUid, dir, hasVideo, videoMaxBitrateBps, videoMaxFrameRate, callback)
 }
 
 actual fun createPeerConnectionClientFactory(

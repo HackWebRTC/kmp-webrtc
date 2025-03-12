@@ -22,11 +22,9 @@ abstract class ObjCPeerConnectionClientFactory(
 
     override fun createPeerConnectionClient(
         peerUid: String, dir: Int, hasVideo: Boolean,
-        videoMaxBitrate: Int, videoMaxFrameRate: Int,
+        videoMaxBitrateBps: Int, videoMaxFrameRate: Int,
         callback: PeerConnectionClientCallback
-    ) = ObjCPeerConnectionClient(
-        peerUid, dir, hasVideo, videoMaxBitrate, videoMaxFrameRate, callback
-    )
+    ) = ObjCPeerConnectionClient(peerUid, dir, hasVideo, videoMaxBitrateBps, videoMaxFrameRate, callback)
 
     override fun createLocalTracks() {
         // OWT requires video in SDP, so must have video track

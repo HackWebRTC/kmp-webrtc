@@ -302,7 +302,7 @@ static NSUInteger const kBottomViewHeight = 200;
     _pcClient = [_pcClientFactory createPeerConnectionClientPeerUid:@"test"
                                                                dir:0
                                                           hasVideo:YES
-                                                   videoMaxBitrate:2000
+                                                videoMaxBitrateBps:2000
                                                  videoMaxFrameRate:30
                                                           callback:self];
 

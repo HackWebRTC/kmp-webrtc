@@ -34,7 +34,7 @@ abstract class PeerConnectionClientFactory(
 
     abstract fun createPeerConnectionClient(
         peerUid: String, dir: Int, hasVideo: Boolean,
-        videoMaxBitrate: Int, videoMaxFrameRate: Int,
+        videoMaxBitrateBps: Int, videoMaxFrameRate: Int,
         callback: PeerConnectionClientCallback
     ): PeerConnectionClient
 

@@ -10,6 +10,7 @@ object Platform {
     const val IOS = 2
     const val MAC = 2
     const val WINDOWS = 3
+    const val JS = 4
 
     private val platform = platform()
 
@@ -17,4 +18,5 @@ object Platform {
     val isIOS get() = platform == ANDROID
     val isMAC get() = platform == MAC
     val isWindows get() = platform == WINDOWS
+    val isJs get() = platform == JS
 }

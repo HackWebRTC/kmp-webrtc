@@ -67,13 +67,9 @@ class AndroidPeerConnectionClientFactory(
 
     override fun createPeerConnectionClient(
         peerUid: String, dir: Int, hasVideo: Boolean,
-        videoMaxBitrate: Int, videoMaxFrameRate: Int,
+        videoMaxBitrateBps: Int, videoMaxFrameRate: Int,
         callback: PeerConnectionClientCallback
-    ): PeerConnectionClient {
-        return AndroidPeerConnectionClient(
-            peerUid, dir, hasVideo, videoMaxBitrate, videoMaxFrameRate, callback
-        )
-    }
+    ) = AndroidPeerConnectionClient(peerUid, dir, hasVideo, videoMaxBitrateBps, videoMaxFrameRate, callback)
 
     override fun createLocalTracks() {
         val appContext = sAppContext ?: return

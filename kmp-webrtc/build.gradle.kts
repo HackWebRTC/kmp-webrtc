@@ -43,21 +43,18 @@ kotlin {
             baseName = "kmp_webrtc"
             isStatic = true
         }
-//        pod("kmp_xlog") {
-//            version = libs.versions.kmpXlog.get()
-//        }
     }
 
     androidTarget {
         publishLibraryVariants("release")
     }
 
+    js(IR) {
+        browser {
+        }
+        binaries.executable()
+    }
 
-//    js(IR) {
-//        browser {
-//        }
-//        binaries.executable()
-//    }
     mingwX64 {
         compilations.getByName("main").cinterops {
             val webrtc by creating {
@@ -69,13 +66,14 @@ kotlin {
         }
         binaries {
             all {
-                linkerOpts.addAll(listOf("-L${rootProject.projectDir}/libs/windows/x64", "-lwin_pc_client.dll",))
+                linkerOpts.addAll(listOf("-L${rootProject.projectDir}/libs/windows/x64", "-lwin_pc_client.dll"))
             }
             sharedLib {
                 baseName = "kmp_webrtc"
             }
         }
     }
+
 //    linuxX64 {}
 
     applyDefaultHierarchyTemplate()
@@ -88,8 +86,8 @@ kotlin {
 
         commonMain {
             dependencies {
-                implementation(libs.kotlinx.serialization.json)
-                implementation(libs.kmpXlog)
+                api(libs.kotlinx.serialization.json)
+                api(libs.kmpXlog)
             }
         }
         commonTest {
@@ -104,17 +102,15 @@ kotlin {
         androidMain {
             dependencies {
                 implementation(files("../libs/android/webrtc.aar"))
-                implementation(libs.androidx.lifecycle)
+                api(libs.androidx.lifecycle)
             }
         }
-//        jsMain {
-//            dependencies {
-//            }
-//        }
-//        mingwMain {
-//            dependencies {
-//            }
-//        }
+        jsMain {
+            dependencies {
+                api(libs.kotlin.stdlib.js)
+                api(npm("webrtc-adapter", "9.0.1"))
+            }
+        }
 
         val cppCommon by creating {
             dependsOn(commonMain.get())

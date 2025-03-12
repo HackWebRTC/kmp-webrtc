@@ -12,8 +12,7 @@ KMP wrapper for WebRTC.
 |       `iOS`        |          🚀          |
 |      `macOS`       |          🚀          |
 |   `Windows X64`    |          🚀          |
-| `JS`     (Chrome)  |          🔮          |
-| `WasmJS` (Chrome)  |          🔮          |
+| `JS`     (Chrome)  |          🚀          |
 |    `Linux X64`     |          🔮          |
 
 ## Dependency
@@ -88,6 +87,12 @@ Open the project (the repo root dir) in Android studio, and run the example.andr
 ```bash
 .\scripts\setup_windows.bat
 # open example\winApp\winApp.sln in Visual Studio 2022, and run it.
+```
+
+### JS
+
+```bash
+./gradlew :example:webApp:jsBrowserRun
 ```
 
 ## Build WebRTC

@@ -9,7 +9,7 @@ import kotlinx.cinterop.*
  */
 abstract class CppPeerConnectionClientFactory(
     config: Config,
-    errorHandler: (Int, String) -> Unit
+    errorHandler: (Int, String) -> Unit,
 ) : PeerConnectionClientFactory(config, errorHandler, DummyAudioDeviceManager()) {
     private var videoCapturer: COpaquePointer? = null
 

@@ -328,6 +328,7 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
+        // 10. on ice connected, add renderer for remote stream
         pcClient.addRemoteTrackRenderer(remoteRenderer);
       }
     });

@@ -22,4 +22,5 @@ include(":kmp-webrtc")
 
 if (System.getProperty("os.name") == "Mac OS X") {
     include(":example:androidApp")
+    include(":example:webApp")
 }
