@@ -75,6 +75,13 @@ abstract class PeerConnectionClientFactory(
         const val DIR_RECV_ONLY = 2
         const val DIR_INACTIVE = 3
 
+        const val VIDEO_CODEC_VP8 = 1
+        const val VIDEO_CODEC_VP9 = 2
+        const val VIDEO_CODEC_H264_BASELINE = 3
+        const val VIDEO_CODEC_H264_HIGH_PROFILE = 4
+        const val VIDEO_CODEC_H265 = 5
+        const val VIDEO_CODEC_AV1 = 6
+
         const val VIDEO_CAPTURE_IMPL_SYSTEM_CAMERA = 1
         const val VIDEO_CAPTURE_IMPL_SCREEN = 2
         const val VIDEO_CAPTURE_IMPL_FILE = 3

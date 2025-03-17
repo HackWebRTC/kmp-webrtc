@@ -2,7 +2,7 @@
 
 set -e
 
-./scripts/setup_apple.sh
+./scripts/setup_apple_demo.sh
 
 pushd example/macApp
 xcodebuild -workspace macApp.xcworkspace \
