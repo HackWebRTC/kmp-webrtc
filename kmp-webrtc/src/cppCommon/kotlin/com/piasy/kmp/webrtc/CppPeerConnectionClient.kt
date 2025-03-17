@@ -255,13 +255,11 @@ abstract class CppPeerConnectionClient(
     }
 
     override fun startRecorder(dir: Int, path: String): Int {
-        Logging.error("WebRTC", "recorder not supported on CPP")
-        return -1
+        return WebRTC.PCClientStartRecorder(realClient, dir, path)
     }
 
     override fun stopRecorder(dir: Int): Int {
-        Logging.error("WebRTC", "recorder not supported on CPP")
-        return -1
+        return WebRTC.PCClientStopRecorder(realClient, dir)
     }
 
     override fun togglePauseStreaming(pause: Boolean) {

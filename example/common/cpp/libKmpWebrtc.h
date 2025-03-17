@@ -50,6 +50,7 @@ enum KmpWebRTCError {
 struct PCClientFactoryPrivateConfig {
     void* hwnd;
     int disable_encryption;
+    const char* capture_file_path;
 };
 
 struct PCClientFactoryConfig {
@@ -83,6 +84,9 @@ KMP_WEBRTC_API void CreateOffer(void* pc_client);
 KMP_WEBRTC_API void SetRemoteDescription(void* pc_client, KmpWebRTCSdpType type, const char* sdp);
 KMP_WEBRTC_API void AddIceCandidate(void* pc_client, const char* sdp_mid, int m_line_index, const char* sdp);
 KMP_WEBRTC_API void GetStats(void* pc_client);
+
+KMP_WEBRTC_API int StartRecorder(void* pc_client, int dir, const char* path);
+KMP_WEBRTC_API int StopRecorder(void* pc_client, int dir);
 
 #if defined(WEBRTC_WIN)
 KMP_WEBRTC_API void AddRemoteTrackRenderer(void* pc_client, void* renderer);

@@ -20,6 +20,11 @@ class WinPeerConnectionClientFactory(
         videoMaxBitrateBps: Int, videoMaxFrameRate: Int,
         callback: PeerConnectionClientCallback
     ) = WinPeerConnectionClient(peerUid, dir, hasVideo, videoMaxBitrateBps, videoMaxFrameRate, callback)
+
+    override fun createVideoCapturer() = WebRTC.PCClientVideoCapturerCreate(
+        config.videoCaptureImpl, config.videoCaptureWidth, config.videoCaptureHeight,
+        config.videoCaptureFps, ""
+    );
 }
 
 actual fun createPeerConnectionClientFactory(

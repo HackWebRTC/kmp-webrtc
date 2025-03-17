@@ -16,10 +16,7 @@ abstract class CppPeerConnectionClientFactory(
     override fun createLocalTracks() {
         logI("createLocalTracks, impl ${config.videoCaptureImpl}, " +
                 "${config.videoCaptureWidth}x${config.videoCaptureHeight}@${config.videoCaptureFps}")
-        videoCapturer = WebRTC.PCClientVideoCapturerCreate(
-            config.videoCaptureImpl, config.videoCaptureWidth, config.videoCaptureHeight,
-            config.videoCaptureFps, ""
-        )
+        videoCapturer = createVideoCapturer()
         if (videoCapturer == null) {
             logE("createLocalTracks WebRTC.PCClientVideoCapturerCreate return null")
             errorHandler(ERR_VIDEO_CAPTURER_CREATE_FAIL, "")
@@ -33,6 +30,8 @@ abstract class CppPeerConnectionClientFactory(
             errorHandler(ERR_CREATE_LOCAL_TRACKS_FAIL, "res: $res")
         }
     }
+
+    protected abstract fun createVideoCapturer(): COpaquePointer?
 
     override fun addLocalTrackRenderer(renderer: Any) {
     }

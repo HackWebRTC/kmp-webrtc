@@ -20,8 +20,8 @@
 #error "Unknown target"
 #endif
 
-#define KFunc(NAME) g_lib->kotlin.root.com.piasy.kmp.webrtc.##NAME
-#define KType(NAME) kmp_webrtc_kref_com_piasy_kmp_webrtc_##NAME
+#define KFunc(NAME) g_lib->kotlin.root.com.piasy.kmp.webrtc.NAME
+#define KType(NAME) KT_SYMBOL(kmp_webrtc_kref_com_piasy_kmp_webrtc_##NAME)
 
 static KT_SYMBOL(kmp_webrtc_ExportedSymbols)* g_lib = nullptr;
 
@@ -29,7 +29,7 @@ int InitializeWebRTC(const char* field_trials, int debug_log) {
     if (!g_lib) {
         g_lib = KT_SYMBOL(kmp_webrtc_symbols)();
     }
-    return KFunc(initializeWebRTC)(kmp_webrtc_kref_kotlin_Any(), field_trials, debug_log);
+    return KFunc(initializeWebRTC)(KT_SYMBOL(kmp_webrtc_kref_kotlin_Any)(), field_trials, debug_log);
 }
 
 struct PCClientFactoryConfig* DefaultPCClientFactoryConfig() {
@@ -52,14 +52,18 @@ struct PcClientFactoryHolder {
 };
 
 void* CreatePCClientFactory(struct PCClientFactoryConfig* config, PCClientFactoryErrorHandler handler, void* opaque) {
-    KType(PeerConnectionClientFactory_PrivateConfig) private_config = KFunc(PeerConnectionClientFactory.PrivateConfig.PrivateConfig)();
+    KType(PeerConnectionClientFactory_PrivateConfig) pconfig = KFunc(PeerConnectionClientFactory.PrivateConfig.PrivateConfig)();
     KType(PeerConnectionClientFactory_Config) k_config = KFunc(PeerConnectionClientFactory.Config.Config)(
         (int) config->video_capture_impl, config->video_capture_width, config->video_capture_height,
-        config->video_capture_fps, 0, private_config);
-    KType(WinPrivateConfig) win_private_config = KFunc(WinPrivateConfig.WinPrivateConfig)(config->private_config.hwnd, config->private_config.disable_encryption);
-    KType(PeerConnectionClientFactory_Config) k_config_with_pri = KFunc(utils.createPcClientFactoryConfig)(k_config, win_private_config);
+        config->video_capture_fps, 0, pconfig);
+#if defined(WEBRTC_WIN)
+    KType(WinPrivateConfig) private_config = KFunc(WinPrivateConfig.WinPrivateConfig)(config->private_config.hwnd, config->private_config.disable_encryption);
+#else
+    KType(LinuxPrivateConfig) private_config = KFunc(LinuxPrivateConfig.LinuxPrivateConfig)(config->private_config.hwnd, config->private_config.disable_encryption, config->private_config.capture_file_path);
+#endif
+    KType(PeerConnectionClientFactory_Config) k_config_with_pri = KFunc(utils.createPcClientFactoryConfig)(k_config, private_config);
 
-    kmp_webrtc_kref_kotlin_Function2 error_handler = KFunc(utils.createErrorHandler)(handler, opaque);
+    KT_SYMBOL(kmp_webrtc_kref_kotlin_Function2) error_handler = KFunc(utils.createErrorHandler)((void*) handler, opaque);
 
     PcClientFactoryHolder* holder = new PcClientFactoryHolder();
     holder->factory = KFunc(createPeerConnectionClientFactory)(k_config_with_pri, error_handler);
@@ -69,7 +73,7 @@ void* CreatePCClientFactory(struct PCClientFactoryConfig* config, PCClientFactor
 void DestroyPCClientFactory(void** pc_client_factory) {
     PcClientFactoryHolder* holder = reinterpret_cast<PcClientFactoryHolder*>(*pc_client_factory);
     KFunc(PeerConnectionClientFactory.destroyPeerConnectionFactory)(holder->factory);
-    delete (*pc_client_factory);
+    delete (holder);
     *pc_client_factory = nullptr;
 }
 
@@ -106,13 +110,13 @@ void* CreatePeerConnectionClient(void* pc_client_factory, const char* peer_uid, 
 void ClosePeerConnectionClient(void** pc_client) {
     PcClientHolder* holder = reinterpret_cast<PcClientHolder*>(*pc_client);
     KFunc(PeerConnectionClient.close)(holder->client);
-    delete (*pc_client);
+    delete (holder);
     *pc_client = nullptr;
 }
 
 void CreatePeerConnection(void* pc_client) {
     PcClientHolder* holder = reinterpret_cast<PcClientHolder*>(pc_client);
-    kmp_webrtc_kref_kotlin_collections_List ice_servers = KFunc(utils.emptyIceServers)();
+    KT_SYMBOL(kmp_webrtc_kref_kotlin_collections_List) ice_servers = KFunc(utils.emptyIceServers)();
     KFunc(PeerConnectionClient.createPeerConnection)(holder->client, ice_servers);
 }
 
@@ -136,6 +140,16 @@ void AddIceCandidate(void* pc_client, const char* sdp_mid, int m_line_index, con
 void GetStats(void* pc_client) {
     PcClientHolder* holder = reinterpret_cast<PcClientHolder*>(pc_client);
     KFunc(PeerConnectionClient.getStats)(holder->client);
+}
+
+int StartRecorder(void* pc_client, int dir, const char* path) {
+    PcClientHolder* holder = reinterpret_cast<PcClientHolder*>(pc_client);
+    return KFunc(PeerConnectionClient.startRecorder)(holder->client, dir, path);
+}
+
+int StopRecorder(void* pc_client, int dir) {
+    PcClientHolder* holder = reinterpret_cast<PcClientHolder*>(pc_client);
+    return KFunc(PeerConnectionClient.stopRecorder)(holder->client, dir);
 }
 
 #if defined(WEBRTC_WIN)
