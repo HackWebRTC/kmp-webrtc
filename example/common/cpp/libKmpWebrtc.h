@@ -16,18 +16,27 @@
 extern "C" {
 #endif
 
-enum KmpWebRTCCaptureImpl {
-    kKmpWebRTCCaptureSystemCamera = 1,
-    kKmpWebRTCCaptureScreen = 2,
-    kKmpWebRTCCaptureFile = 3,
-    kKmpWebRTCCaptureApp = 4,
-};
-
 enum KmpWebRTCDir {
     kKmpWebRTCDirSendRecv = 0,
     kKmpWebRTCDirSendOnly = 1,
     kKmpWebRTCDirRecvOnly = 2,
     kKmpWebRTCDirInactive = 3,
+};
+
+enum KmpWebRTCVideoCodec {
+    kKmpWebRTCVideoCodecVP8 = 1,
+    kKmpWebRTCVideoCodecVP9 = 2,
+    kKmpWebRTCVideoCodecH264Baseline = 3,
+    kKmpWebRTCVideoCodecH264HighProfile = 4,
+    kKmpWebRTCVideoCodecH265 = 5,
+    kKmpWebRTCVideoCodecAV1 = 6,
+};
+
+enum KmpWebRTCCaptureImpl {
+    kKmpWebRTCCaptureSystemCamera = 1,
+    kKmpWebRTCCaptureScreen = 2,
+    kKmpWebRTCCaptureFile = 3,
+    kKmpWebRTCCaptureApp = 4,
 };
 
 enum KmpWebRTCSdpType {
@@ -93,6 +102,8 @@ KMP_WEBRTC_API void AddRemoteTrackRenderer(void* pc_client, void* renderer);
 #endif
 
 KMP_WEBRTC_API void LogInfo(const char* log);
+
+KMP_WEBRTC_API const char* PreferSdp(const char* sdp, int codec);
 
 #if __cplusplus
 }

@@ -21,7 +21,7 @@ static void pcClientFactoryErrorHandler(void*, int error, const char* message) {
 }
 
 static const char* pcClientOnPreferCodecs(void*, const char* peer_uid, const char* sdp) {
-    return sdp;
+    return PreferSdp(sdp, kKmpWebRTCVideoCodecH264HighProfile);
 }
 
 static void pcClientOnPeerConnectionStatsReady(void*, const char* peer_uid, const char* stats) {

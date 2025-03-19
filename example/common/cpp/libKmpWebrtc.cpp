@@ -162,3 +162,7 @@ void AddRemoteTrackRenderer(void* pc_client, void* renderer) {
 void LogInfo(const char* log) {
     KFunc(utils.logInfo)(log);
 }
+
+const char* PreferSdp(const char* sdp, int codec) {
+    return KFunc(utils.preferCodec)(sdp, codec);
+}
