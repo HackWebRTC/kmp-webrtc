@@ -89,6 +89,13 @@ Open the project (the repo root dir) in Android studio, and run the example.andr
 # open example\winApp\winApp.sln in Visual Studio 2022, and run it.
 ```
 
+### Linux
+
+```bash
+./scripts/build_linux_demo.sh
+./example/linuxApp/build/loopback <path to video file>
+```
+
 ### JS
 
 ```bash
@@ -111,6 +118,14 @@ File structure for Windows:
 
 ```
 - webrtc_windows
+    - src
+- kmp-webrtc
+```
+
+File structure for Linux:
+
+```
+- webrtc_android
     - src
 - kmp-webrtc
 ```
@@ -146,6 +161,14 @@ In `x64 Native Tools Command Prompt for VS 2022`:
 
 ```bash
 .\sdk\build_windows_libs.bat ..\..\kmp-webrtc
+```
+
+### Linux
+
+```bash
+pushd ../webrtc_android/src/ && \
+./sdk/build_linux_libs.sh ../../kmp-webrtc/libs --skip-build-ffmpeg && \
+popd
 ```
 
 ### Upload libs zip

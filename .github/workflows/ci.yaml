@@ -33,6 +33,8 @@ jobs:
             cmd: ".\\scripts\\setup_windows.bat \"C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Tools\\MSVC\\14.43.34808\\bin\\Hostx64\\x64\\lib.exe\" && cd example\\winApp && msbuild winApp.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64"
           - os: macos-latest
             cmd: "./gradlew :example:webApp:jsBrowserDistribution"
+          - os: ubuntu-latest
+            cmd: "./scripts/build_linux_demo.sh"
     runs-on: ${{ matrix.os }}
     permissions:
       pull-requests: write
