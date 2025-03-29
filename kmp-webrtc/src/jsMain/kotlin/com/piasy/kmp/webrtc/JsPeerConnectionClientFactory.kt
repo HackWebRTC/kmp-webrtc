@@ -52,7 +52,7 @@ actual fun initializeWebRTC(context: Any?, fieldTrials: String, debugLog: Boolea
         Logging.info(PeerConnectionClientFactory.TAG, "initialize, already initialized")
         return true
     }
-    initializeConsoleLog()
+    initializeConsoleLog(debugLog)
     PeerConnectionClientFactory.sInitialized = true
     Logging.info(PeerConnectionClientFactory.TAG, "initialize success")
     return true

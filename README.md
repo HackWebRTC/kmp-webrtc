@@ -13,7 +13,7 @@ KMP wrapper for WebRTC.
 |      `macOS`       |          🚀          |
 |   `Windows X64`    |          🚀          |
 | `JS`     (Chrome)  |          🚀          |
-|    `Linux X64`     |          🔮          |
+|    `Linux X64`     |          🚀          |
 
 ## Dependency
 

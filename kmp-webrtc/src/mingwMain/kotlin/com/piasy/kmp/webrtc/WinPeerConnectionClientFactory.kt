@@ -23,7 +23,7 @@ class WinPeerConnectionClientFactory(
 
     override fun createVideoCapturer() = WebRTC.PCClientVideoCapturerCreate(
         config.videoCaptureImpl, config.videoCaptureWidth, config.videoCaptureHeight,
-        config.videoCaptureFps, ""
+        config.videoCaptureFps, "", ""
     );
 }
 
