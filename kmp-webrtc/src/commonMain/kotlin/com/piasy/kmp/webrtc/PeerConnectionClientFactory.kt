@@ -114,6 +114,8 @@ abstract class PeerConnectionClientFactory(
     }
 }
 
+fun Boolean.toInt() = if (this) 1 else 0
+
 expect fun initializeWebRTC(context: Any?, fieldTrials: String, debugLog: Boolean): Boolean
 
 expect fun createPeerConnectionClientFactory(

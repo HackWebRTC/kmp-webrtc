@@ -8,7 +8,10 @@ import kotlinx.cinterop.COpaquePointer
 data class LinuxPrivateConfig(
     internal val hwnd: COpaquePointer,
     internal val disableEncryption: Boolean,
+    internal val dummyAudioDevice: Boolean,
+    internal val transitVideo: Boolean,
     internal val captureFilePath: String,
+    internal val captureDumpPath: String,
 ) : PeerConnectionClientFactory.PrivateConfig()
 
 class LinuxPeerConnectionClientFactory(
@@ -25,8 +28,8 @@ class LinuxPeerConnectionClientFactory(
 
     override fun createVideoCapturer() = WebRTC.PCClientVideoCapturerCreate(
         config.videoCaptureImpl, config.videoCaptureWidth, config.videoCaptureHeight,
-        config.videoCaptureFps, privateConfig.captureFilePath
-    );
+        config.videoCaptureFps, privateConfig.captureFilePath, privateConfig.captureDumpPath
+    )
 }
 
 actual fun createPeerConnectionClientFactory(
@@ -34,7 +37,11 @@ actual fun createPeerConnectionClientFactory(
     errorHandler: (Int, String) -> Unit,
 ): PeerConnectionClientFactory {
     val privateConfig = config.privateConfig as LinuxPrivateConfig
-    val disableEncryption = if (privateConfig.disableEncryption) 1 else 0
-    WebRTC.PCClientCreatePeerConnectionFactory(privateConfig.hwnd, disableEncryption, 0, 0)
+    WebRTC.PCClientCreatePeerConnectionFactory(
+        privateConfig.hwnd,
+        privateConfig.disableEncryption.toInt(),
+        privateConfig.dummyAudioDevice.toInt(),
+        privateConfig.transitVideo.toInt(),
+    )
     return LinuxPeerConnectionClientFactory(config, errorHandler, privateConfig)
 }
