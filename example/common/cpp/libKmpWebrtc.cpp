@@ -39,6 +39,11 @@ struct PCClientFactoryConfig* DefaultPCClientFactoryConfig() {
     config->video_capture_height = 720;
     config->video_capture_fps = 30;
     config->private_config.hwnd = nullptr;
+    config->private_config.disable_encryption = 0;
+    config->private_config.dummy_audio_device = 0;
+    config->private_config.transit_video = 0;
+    config->private_config.capture_file_path = "";
+    config->private_config.capture_dump_path = "";
     return config;
 }
 
@@ -59,7 +64,7 @@ void* CreatePCClientFactory(struct PCClientFactoryConfig* config, PCClientFactor
 #if defined(WEBRTC_WIN)
     KType(WinPrivateConfig) private_config = KFunc(WinPrivateConfig.WinPrivateConfig)(config->private_config.hwnd, config->private_config.disable_encryption);
 #else
-    KType(LinuxPrivateConfig) private_config = KFunc(LinuxPrivateConfig.LinuxPrivateConfig)(config->private_config.hwnd, config->private_config.disable_encryption, config->private_config.capture_file_path);
+    KType(LinuxPrivateConfig) private_config = KFunc(LinuxPrivateConfig.LinuxPrivateConfig)(config->private_config.hwnd, config->private_config.disable_encryption, config->private_config.dummy_audio_device, config->private_config.transit_video, config->private_config.capture_file_path, config->private_config.capture_dump_path);
 #endif
     KType(PeerConnectionClientFactory_Config) k_config_with_pri = KFunc(utils.createPcClientFactoryConfig)(k_config, private_config);
 

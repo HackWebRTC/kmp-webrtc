@@ -59,7 +59,10 @@ enum KmpWebRTCError {
 struct PCClientFactoryPrivateConfig {
     void* hwnd;
     int disable_encryption;
+    int dummy_audio_device;
+    int transit_video;
     const char* capture_file_path;
+    const char* capture_dump_path;
 };
 
 struct PCClientFactoryConfig {

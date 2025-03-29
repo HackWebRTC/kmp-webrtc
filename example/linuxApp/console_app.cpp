@@ -18,9 +18,10 @@ int main(int argc, char *argv[]) {
     }
 
     signal(SIGINT, signal_handler);
-    loopback(argv[1]);
+    startLoopback(argv[1]);
     while (running) {
         sleep(100);
     }
+    stopLoopback();
     return 0;
 }

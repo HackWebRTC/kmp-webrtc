@@ -2,133 +2,130 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
+#include <libavcodec/bsf.h>
 #include <libavutil/timestamp.h>
 }
 
-#include <iostream>
-#include <unistd.h>
+#include <stdio.h>
 
-int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <video_file>" << std::endl;
+int main(int argc, char *argv[]) {
+    AVFormatContext *fmt_ctx = NULL;
+    AVBSFContext *bsf_ctx = NULL;
+    FILE *outfile = NULL;
+    int video_stream_index = -1;
+    int ret;
+
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <input.mp4> <output.h264>\n", argv[0]);
         return 1;
     }
 
-    const char* input_file = argv[1];
-    AVPacket* packet = av_packet_alloc();
-    if (!packet) {
-        std::cerr << "FileCapturer::Start av_packet_alloc fail";
-        return -1;
-    }
-    av_init_packet(packet);
+    const char *input_file = argv[1];
+    const char *output_file = argv[2];
 
-    AVFormatContext* format_context = nullptr;
-    int error =
-        avformat_open_input(&format_context, input_file, nullptr, nullptr);
-    if (error < 0) {
-        std::cerr << "FileCapturer::Start avformat_open_input fail "
-                        << input_file << " " << error;//av_err2str(error);
-        av_packet_free(&packet);
-        return -2;
+    // 打开输入文件
+    if ((ret = avformat_open_input(&fmt_ctx, input_file, NULL, NULL))) {
+        fprintf(stderr, "无法打开输入文件\n");
+        return ret;
     }
 
-    error = avformat_find_stream_info(format_context, nullptr);
-    if (error < 0) {
-        std::cerr << "FileCapturer::Start avformat_find_stream_info fail "
-                        << error;//av_err2str(error);
-        av_packet_free(&packet);
-        avformat_close_input(&format_context);
-        return -3;
+    // 获取流信息
+    if ((ret = avformat_find_stream_info(fmt_ctx, NULL)) < 0) {
+        fprintf(stderr, "无法获取流信息\n");
+        avformat_close_input(&fmt_ctx);
+        return ret;
     }
 
-    int v_stream_no = av_find_best_stream(format_context, AVMEDIA_TYPE_VIDEO, -1,
-                                            -1, nullptr, 0);
-    if (v_stream_no < 0 ||
-        format_context->streams[v_stream_no]->time_base.den <= 0) {
-        std::cerr << "FileCapturer::Start av_find_best_stream fail "
-                        << v_stream_no;//av_err2str(v_stream_no);
-        av_packet_free(&packet);
-        avformat_close_input(&format_context);
-        return -4;
-    }
-    AVStream* v_stream = format_context->streams[v_stream_no];
-
-    bool first_packet = true;
-    int64_t last_pts_ms = 0;
-    int64_t emit_next_packet_ms = 0;
-
-    bool need_loop_again = false;
-    bool running_ = true;
-    while (running_) {
-        int ret = av_read_frame(format_context, packet);
-        if (ret < 0 && ret != AVERROR_EOF) {
-            std::cerr << "FileCapturer::Start av_read_frame fail "
-                            << ret;//av_err2str(ret);
-            running_ = false;
+    // 查找视频流
+    for (int i = 0; i < fmt_ctx->nb_streams; i++) {
+        if (fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            video_stream_index = i;
             break;
         }
-        if (ret == AVERROR_EOF) {
-            if (true) {
-                std::cerr << "FileCapturer::Start got EOF, loop again";
-                running_ = false;
-                need_loop_again = true;
-                break;
-            } else {
-                std::cerr << "FileCapturer::Start got EOF, quit";
-                running_ = false;
-                break;
-            }
-        }
-        if (packet->stream_index != v_stream->index) {
-            continue;
-        }
-        int64_t now_ms = 0;//rtc::TimeMicros() / 1000;
-        int64_t this_pts_ms = 1000 * packet->pts * v_stream->time_base.num /
-                                v_stream->time_base.den;
-        if (first_packet) {
-            emit_next_packet_ms = now_ms;
-            last_pts_ms = this_pts_ms;
-        }
-        emit_next_packet_ms += this_pts_ms - last_pts_ms;
-        last_pts_ms = this_pts_ms;
-        int sleep_ms = (int)(emit_next_packet_ms - now_ms);
-
-        // 获取流的时间基
-        AVRational time_base = v_stream->time_base;
-
-        // 将 pts 转换为毫秒
-        int64_t pts_ms = av_rescale_q(packet->pts, time_base, (AVRational){1, 1000});
-        first_packet = false;
-        printf("av_read_frame packet->stream_index %d, v_stream->index %d, v_stream_no %d, packet->pts %d, v_stream->time_base.num %d, v_stream->time_base.den %d, this_pts_ms %d, pts_ms %d\n", packet->stream_index, v_stream->index, v_stream_no, (int) packet->pts, v_stream->time_base.num, v_stream->time_base.den, (int) this_pts_ms, (int) pts_ms);
-
-        if (!first_packet && sleep_ms > 5) {
-    #if defined(WEBRTC_WIN)
-            Sleep(sleep_ms);
-    #else
-            usleep(sleep_ms * 1000);
-    #endif
-        }
-
-        // if (video_callback_ && running_) {
-        //     rtc::scoped_refptr<webrtc::TransitVideoFrameBuffer> frame_buffer =
-        //         rtc::make_ref_counted<webrtc::TransitVideoFrameBuffer>(
-        //             width_, height_, packet->size);
-        //     memcpy(frame_buffer->mutable_data(), packet->data, packet->size);
-
-        //     video_callback_->OnFrame(
-        //         VideoFrame::Builder()
-        //             .set_video_frame_buffer(frame_buffer)
-        //             .set_rotation(VideoRotation::kVideoRotation_0)
-        //             .set_dummy(false)
-        //             .set_transit(true)
-        //             .set_rtp_timestamp(0)
-        //             .set_timestamp_ms(rtc::TimeMillis())
-        //             .build());
-        // }
+    }
+    if (video_stream_index == -1) {
+        fprintf(stderr, "未找到视频流\n");
+        avformat_close_input(&fmt_ctx);
+        return AVERROR(EINVAL);
     }
 
-    av_packet_free(&packet);
-    avformat_close_input(&format_context);
+    // 验证是否为H.264编码
+    AVCodecParameters *codecpar = fmt_ctx->streams[video_stream_index]->codecpar;
+    if (codecpar->codec_id != AV_CODEC_ID_H264) {
+        fprintf(stderr, "视频流不是H.264编码\n");
+        avformat_close_input(&fmt_ctx);
+        return AVERROR(EINVAL);
+    }
+
+    // 初始化bitstream过滤器（AVCC转Annex B）
+    const AVBitStreamFilter *bsf = av_bsf_get_by_name("h264_mp4toannexb");
+    if (!bsf) {
+        fprintf(stderr, "找不到h264_mp4toannexb过滤器\n");
+        avformat_close_input(&fmt_ctx);
+        return AVERROR(EINVAL);
+    }
+    if ((ret = av_bsf_alloc(bsf, &bsf_ctx)) < 0) {
+        avformat_close_input(&fmt_ctx);
+        return ret;
+    }
+    avcodec_parameters_copy(bsf_ctx->par_in, codecpar);
+    if ((ret = av_bsf_init(bsf_ctx)) < 0) {
+        av_bsf_free(&bsf_ctx);
+        avformat_close_input(&fmt_ctx);
+        return ret;
+    }
+
+    // 打开输出文件
+    outfile = fopen(output_file, "wb");
+    if (!outfile) {
+        fprintf(stderr, "无法打开输出文件\n");
+        av_bsf_free(&bsf_ctx);
+        avformat_close_input(&fmt_ctx);
+        return AVERROR(EIO);
+    }
+
+    AVPacket pkt;
+    av_init_packet(&pkt);
+
+    // 读取并处理数据包
+    while (av_read_frame(fmt_ctx, &pkt) >= 0) {
+        if (pkt.stream_index == video_stream_index) {
+            // 发送原始数据包到过滤器
+            if ((ret = av_bsf_send_packet(bsf_ctx, &pkt)) < 0) {
+                av_packet_unref(&pkt);
+                continue;
+            }
+            av_packet_unref(&pkt);
+
+            // 接收处理后的数据包
+            while ((ret = av_bsf_receive_packet(bsf_ctx, &pkt)) == 0) {
+                fwrite(pkt.data, 1, pkt.size, outfile);
+                av_packet_unref(&pkt);
+            }
+
+            if (ret == AVERROR(EAGAIN)) {
+                continue;
+            } else if (ret < 0 && ret != AVERROR_EOF) {
+                fprintf(stderr, "过滤器处理错误\n");
+                break;
+            }
+        } else {
+            av_packet_unref(&pkt);
+        }
+    }
+
+    // 冲刷过滤器
+    av_bsf_send_packet(bsf_ctx, NULL);
+    while (av_bsf_receive_packet(bsf_ctx, &pkt) == 0) {
+        fwrite(pkt.data, 1, pkt.size, outfile);
+        av_packet_unref(&pkt);
+    }
+
+    // 清理资源
+    av_bsf_free(&bsf_ctx);
+    avformat_close_input(&fmt_ctx);
+    fclose(outfile);
 
     return 0;
 }

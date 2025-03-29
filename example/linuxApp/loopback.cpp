@@ -43,7 +43,7 @@ static void pcClientOnLocalDescription(void*, const char* peer_uid, int type, co
 static void pcClientOnIceCandidate(void*, const char* peer_uid, const char* sdp_mid, int m_line_index, const char* sdp);
 static void pcClientOnIceConnected(void*, const char* peer_uid);
 
-void loopback(const char* path) {
+void startLoopback(const char* path) {
     // 1. initialize
     InitializeWebRTC("", true);
 
@@ -51,7 +51,10 @@ void loopback(const char* path) {
     PCClientFactoryConfig* config = DefaultPCClientFactoryConfig();
     config->video_capture_impl = kKmpWebRTCCaptureFile;
     config->private_config.disable_encryption = 1;
+    config->private_config.dummy_audio_device = 1;
+    config->private_config.transit_video = 1;
     config->private_config.capture_file_path = path;
+    //config->private_config.capture_dump_path = "cap_dump.h264";
     gPcClientFactory = CreatePCClientFactory(config, pcClientFactoryErrorHandler, nullptr);
     PCClientFactoryConfigDestroy(&config);
 
@@ -101,5 +104,12 @@ static void pcClientOnIceConnected(void*, const char* peer_uid) {
     LogInfo(oss.str().c_str());
 
     // 10. on ice connected, add renderer for remote stream
+    StartRecorder(gPcClient, kKmpWebRTCDirSendOnly, "send.mkv");
     StartRecorder(gPcClient, kKmpWebRTCDirRecvOnly, "recv.mkv");
+}
+
+void stopLoopback() {
+    StopVideoCapture(gPcClientFactory);
+    ClosePeerConnectionClient(&gPcClient);
+    DestroyPCClientFactory(&gPcClientFactory);
 }
