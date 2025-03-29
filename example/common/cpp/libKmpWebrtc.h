@@ -16,18 +16,27 @@
 extern "C" {
 #endif
 
-enum KmpWebRTCCaptureImpl {
-    kKmpWebRTCCaptureSystemCamera = 1,
-    kKmpWebRTCCaptureScreen = 2,
-    kKmpWebRTCCaptureFile = 3,
-    kKmpWebRTCCaptureApp = 4,
-};
-
 enum KmpWebRTCDir {
     kKmpWebRTCDirSendRecv = 0,
     kKmpWebRTCDirSendOnly = 1,
     kKmpWebRTCDirRecvOnly = 2,
     kKmpWebRTCDirInactive = 3,
+};
+
+enum KmpWebRTCVideoCodec {
+    kKmpWebRTCVideoCodecVP8 = 1,
+    kKmpWebRTCVideoCodecVP9 = 2,
+    kKmpWebRTCVideoCodecH264Baseline = 3,
+    kKmpWebRTCVideoCodecH264HighProfile = 4,
+    kKmpWebRTCVideoCodecH265 = 5,
+    kKmpWebRTCVideoCodecAV1 = 6,
+};
+
+enum KmpWebRTCCaptureImpl {
+    kKmpWebRTCCaptureSystemCamera = 1,
+    kKmpWebRTCCaptureScreen = 2,
+    kKmpWebRTCCaptureFile = 3,
+    kKmpWebRTCCaptureApp = 4,
 };
 
 enum KmpWebRTCSdpType {
@@ -50,6 +59,10 @@ enum KmpWebRTCError {
 struct PCClientFactoryPrivateConfig {
     void* hwnd;
     int disable_encryption;
+    int dummy_audio_device;
+    int transit_video;
+    const char* capture_file_path;
+    const char* capture_dump_path;
 };
 
 struct PCClientFactoryConfig {
@@ -84,11 +97,16 @@ KMP_WEBRTC_API void SetRemoteDescription(void* pc_client, KmpWebRTCSdpType type,
 KMP_WEBRTC_API void AddIceCandidate(void* pc_client, const char* sdp_mid, int m_line_index, const char* sdp);
 KMP_WEBRTC_API void GetStats(void* pc_client);
 
+KMP_WEBRTC_API int StartRecorder(void* pc_client, int dir, const char* path);
+KMP_WEBRTC_API int StopRecorder(void* pc_client, int dir);
+
 #if defined(WEBRTC_WIN)
 KMP_WEBRTC_API void AddRemoteTrackRenderer(void* pc_client, void* renderer);
 #endif
 
 KMP_WEBRTC_API void LogInfo(const char* log);
+
+KMP_WEBRTC_API const char* PreferSdp(const char* sdp, int codec);
 
 #if __cplusplus
 }

@@ -67,6 +67,7 @@ kotlin {
         binaries {
             all {
                 linkerOpts.addAll(listOf("-L${rootProject.projectDir}/libs/windows/x64", "-lwin_pc_client.dll"))
+                //freeCompilerArgs = listOf("-Xadd-light-debug=enable")
             }
             sharedLib {
                 baseName = "kmp_webrtc"
@@ -74,7 +75,25 @@ kotlin {
         }
     }
 
-//    linuxX64 {}
+    linuxX64 {
+        compilations.getByName("main").cinterops {
+            val webrtc by creating {
+                definitionFile.set(project.file("src/cppCommon/cinterop/WebRTC.def"))
+                includeDirs {
+                    allHeaders("${rootProject.projectDir}/libs/windows_linux/include")
+                }
+            }
+        }
+        binaries {
+            all {
+                linkerOpts.addAll(listOf("-L${rootProject.projectDir}/libs/linux/x64", "-llinux_pc_client"))
+                //freeCompilerArgs = listOf("-Xadd-light-debug=enable")
+            }
+            sharedLib {
+                baseName = "kmp_webrtc"
+            }
+        }
+    }
 
     applyDefaultHierarchyTemplate()
     sourceSets {
@@ -116,9 +135,9 @@ kotlin {
             dependsOn(commonMain.get())
         }
 
-//        linuxMain {
-//            dependsOn(cppCommon)
-//        }
+        linuxMain {
+            dependsOn(cppCommon)
+        }
         mingwMain {
             dependsOn(cppCommon)
         }

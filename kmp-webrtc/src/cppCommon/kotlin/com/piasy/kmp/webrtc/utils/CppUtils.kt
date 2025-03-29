@@ -2,6 +2,7 @@ package com.piasy.kmp.webrtc.utils
 
 import com.piasy.kmp.webrtc.CppPeerConnectionClient
 import com.piasy.kmp.webrtc.PeerConnectionClientCallback
+import com.piasy.kmp.webrtc.PeerConnectionClientFactory
 import com.piasy.kmp.webrtc.data.IceCandidate
 import com.piasy.kmp.webrtc.data.IceServer
 import com.piasy.kmp.webrtc.data.RtcStatsReport
@@ -24,6 +25,10 @@ fun createErrorHandler(errorHandler: WebRTC.KmpWebRTCErrorHandler, opaque: COpaq
 
 fun logInfo(log: String) {
     Logging.info("CppUtils", log)
+}
+
+fun preferCodec(sdp: String, codec: Int): String {
+    return SdpManipulator.preferCodecs(sdp, listOf(codec), true)
 }
 
 fun emptyIceServers() = emptyList<IceServer>()

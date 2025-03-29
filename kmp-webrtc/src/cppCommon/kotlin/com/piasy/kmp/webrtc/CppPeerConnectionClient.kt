@@ -32,6 +32,15 @@ private fun pcClientCallbackOnPreferCodecs(
         return null
     }
 
+    // this function is designed to be called from cpp code,
+    // and cpp code needs to access the returned string,
+    // so we need to make sure the cstr still lives after
+    // the function returns, so we use nativeHeap.allocArray
+    // and nativeHeap.free (in freeKString above).
+    // but when kotlin code calls cpp code, when we want to pass
+    // cstr to cpp code, we can just use memScoped, because the
+    // whole cpp function call lifetime is inside the memScoped
+    // block (in CppUtils.kt).
     val refinedSdp = opaque.asStableRef<PeerConnectionClientCallback>()
         .get()
         .onPreferCodecs(peerUid, sdp)
@@ -246,13 +255,11 @@ abstract class CppPeerConnectionClient(
     }
 
     override fun startRecorder(dir: Int, path: String): Int {
-        Logging.error("WebRTC", "recorder not supported on CPP")
-        return -1
+        return WebRTC.PCClientStartRecorder(realClient, dir, path)
     }
 
     override fun stopRecorder(dir: Int): Int {
-        Logging.error("WebRTC", "recorder not supported on CPP")
-        return -1
+        return WebRTC.PCClientStopRecorder(realClient, dir)
     }
 
     override fun togglePauseStreaming(pause: Boolean) {
