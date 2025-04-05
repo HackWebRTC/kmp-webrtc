@@ -12,9 +12,13 @@ permissionsDispatcher = "4.9.2"
 kotlin-stdlib-js = { module = "org.jetbrains.kotlin:kotlin-stdlib-js", version.ref = "kotlin" }
 kotlinx-serialization-json = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0"
 kmpXlog = "com.piasy:kmp-xlog:1.4.1"
+
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+androidx-junit = "androidx.test.ext:junit:1.2.1"
+androidx-runner = "androidx.test:runner:1.6.2"
 
 androidx-appcompat = "androidx.appcompat:appcompat:1.7.0"
+androidx-activity-compose = "androidx.activity:activity-compose:1.10.1"
 permissionsDispatcher = { module = "com.github.permissions-dispatcher:permissionsdispatcher", version.ref = "permissionsDispatcher" }
 permissionsDispatcher-processor = { module = "com.github.permissions-dispatcher:permissionsdispatcher-processor", version.ref = "permissionsDispatcher" }
 androidx-lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.8.7"

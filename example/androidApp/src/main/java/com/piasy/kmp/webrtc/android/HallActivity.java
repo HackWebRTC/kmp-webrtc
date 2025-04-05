@@ -11,7 +11,7 @@ import android.widget.CheckBox;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import java.util.Random;
-import org.webrtc.BuildConfig;
+//import org.webrtc.BuildConfig;
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.RuntimePermissions;
 
@@ -56,7 +56,7 @@ public class HallActivity extends Activity {
     keyprefVideoBitrateValue = getString(R.string.pref_maxvideobitratevalue_key);
 
     TextView tvVersion = findViewById(R.id.tvVersion);
-    tvVersion.setText("kmp-webrtc " + BuildConfig.VERSION_NAME);
+//    tvVersion.setText("kmp-webrtc " + BuildConfig.VERSION_NAME);
 
     mRecording = findViewById(R.id.recording);
     mAudioOnly = findViewById(R.id.audio_only);
@@ -64,7 +64,8 @@ public class HallActivity extends Activity {
     mScreenShare = findViewById(R.id.screen_share);
     findViewById(R.id.setting).setOnClickListener(
         v -> startActivity(new Intent(this, SettingsActivity.class)));
-    findViewById(R.id.loopback).setOnClickListener(v -> startLoopback(CallActivity.class));
+    //findViewById(R.id.loopback).setOnClickListener(v -> startLoopback(CallActivity.class));
+    findViewById(R.id.loopback).setOnClickListener(v -> startLoopback(MediasoupActivity.class));
 
     HallActivityPermissionsDispatcher.checkPermissionWithPermissionCheck(this);
   }
@@ -79,6 +80,7 @@ public class HallActivity extends Activity {
   }
 
   @NeedsPermission({
+      Manifest.permission.INTERNET,
       Manifest.permission.CAMERA,
       Manifest.permission.RECORD_AUDIO,
       Manifest.permission.MODIFY_AUDIO_SETTINGS,

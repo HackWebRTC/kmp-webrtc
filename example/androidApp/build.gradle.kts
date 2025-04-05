@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlinx.serialization)
 }
 
 android {
@@ -15,6 +16,8 @@ android {
         versionName = Consts.releaseVersion
 
         sourceSets.getByName("main").assets.srcDir("../common/assets")
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures {
         compose = true
@@ -44,9 +47,23 @@ dependencies {
     implementation(project(":kmp-webrtc"))
     implementation(files("../../libs/android/webrtc.aar"))
     implementation(libs.androidx.lifecycle)
-    implementation(libs.kmpXlog)
+
+    implementation(libs.kotlinx.serialization.json)
+
+//    implementation(project(":sdpparser"))
+    implementation(project(":proto-client"))
+//    implementation(project(":mediasoup-client"))
+    implementation("com.squareup.okhttp3:okhttp:4.3.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.3.0")
+    implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
+    implementation("io.reactivex.rxjava2:rxjava:2.2.6")
 
     implementation(libs.androidx.appcompat)
     implementation(libs.permissionsDispatcher)
     annotationProcessor(libs.permissionsDispatcher.processor)
+    implementation(libs.androidx.activity.compose)
+
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.runner)
+    androidTestImplementation(libs.kotlin.test)
 }

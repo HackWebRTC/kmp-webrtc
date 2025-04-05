@@ -38,10 +38,7 @@ interface PeerConnectionClient {
 
     fun receive(): Boolean
 
-    fun startRecorder(
-        dir: Int,
-        path: String
-    ): Int
+    fun startRecorder(dir: Int, path: String): Int
 
     fun stopRecorder(dir: Int): Int
 
@@ -130,10 +127,7 @@ interface PeerConnectionClientCallback {
 
     fun onIceDisconnected(peerUid: String)
 
-    fun onError(
-        peerUid: String,
-        code: Int
-    )
+    fun onError(peerUid: String, code: Int)
 
     companion object {
         const val ERR_NO_FACTORY = 1000

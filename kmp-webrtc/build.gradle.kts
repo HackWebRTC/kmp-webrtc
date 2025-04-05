@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.android.library)
     // alias will fail, see https://github.com/gradle/gradle/issues/20084
-    id("org.jetbrains.kotlin.native.cocoapods")
+//    id("org.jetbrains.kotlin.native.cocoapods")
 }
 
 version = Consts.releaseVersion
@@ -32,18 +32,18 @@ kotlin {
         }
     }
 
-    cocoapods {
-        summary = "KMP wrapper for WebRTC."
-        homepage = "https://github.com/HackWebRTC/kmp-webrtc"
-        version = Consts.releaseVersion
-        ios.deploymentTarget = libs.versions.iosDeploymentTarget.get()
-        osx.deploymentTarget = "11.0"
-        podfile = project.file("../example/iosApp/Podfile")
-        framework {
-            baseName = "kmp_webrtc"
-            isStatic = true
-        }
-    }
+//    cocoapods {
+//        summary = "KMP wrapper for WebRTC."
+//        homepage = "https://github.com/HackWebRTC/kmp-webrtc"
+//        version = Consts.releaseVersion
+//        ios.deploymentTarget = libs.versions.iosDeploymentTarget.get()
+//        osx.deploymentTarget = "11.0"
+//        podfile = project.file("../example/iosApp/Podfile")
+//        framework {
+//            baseName = "kmp_webrtc"
+//            isStatic = true
+//        }
+//    }
 
     androidTarget {
         publishLibraryVariants("release")
