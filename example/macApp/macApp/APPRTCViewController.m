@@ -364,6 +364,9 @@ static NSUInteger const kBottomViewHeight = 200;
 - (void)onIceDisconnectedPeerUid:(nonnull NSString *)peerUid {
 }
 
+- (void)onSetRemoteSdpResultPeerUid:(nonnull NSString *)peerUid success:(BOOL)success {
+}
+
 #pragma mark - Private
 
 - (APPRTCMainView*)mainView {

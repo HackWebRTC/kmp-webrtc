@@ -19,12 +19,25 @@ class WinPeerConnectionClientFactory(
         peerUid: String, dir: Int, hasVideo: Boolean,
         videoMaxBitrateBps: Int, videoMaxFrameRate: Int,
         callback: PeerConnectionClientCallback
-    ) = WinPeerConnectionClient(peerUid, dir, hasVideo, videoMaxBitrateBps, videoMaxFrameRate, callback)
+    ): PeerConnectionClient =
+        WinPeerConnectionClient(peerUid, dir, hasVideo, videoMaxBitrateBps, videoMaxFrameRate, callback)
 
     override fun createVideoCapturer() = WebRTC.PCClientVideoCapturerCreate(
         config.videoCaptureImpl, config.videoCaptureWidth, config.videoCaptureHeight,
         config.videoCaptureFps, "", ""
-    );
+    )
+
+    override fun addLocalTrackRenderer(renderer: Any) {
+        if (renderer is COpaquePointer) {
+            WebRTC.PCClientAddLocalRenderer(renderer)
+        }
+    }
+
+    override fun removeLocalTrackRenderer(renderer: Any) {
+        if (renderer is COpaquePointer) {
+            WebRTC.PCClientRemoveLocalRenderer(renderer)
+        }
+    }
 }
 
 actual fun createPeerConnectionClientFactory(

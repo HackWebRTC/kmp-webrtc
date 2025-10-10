@@ -32,6 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface CallViewController : UIViewController
 
 - (instancetype)initWithAudioOnly:(bool)audioOnly
+                         singlePc:(bool)singlePc
                       isLandscape:(bool)isLandscape;
 
 @end

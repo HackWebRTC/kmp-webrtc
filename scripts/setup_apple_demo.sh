@@ -6,7 +6,7 @@ set -e
 
 pushd example/iosApp
 xcodegen
-pod install
+pod install --repo-update
 popd
 
 pushd example/macApp

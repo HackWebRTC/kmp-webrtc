@@ -20,9 +20,8 @@ class JsPeerConnectionClientFactory(
         peerUid: String, dir: Int, hasVideo: Boolean,
         videoMaxBitrateBps: Int, videoMaxFrameRate: Int,
         callback: PeerConnectionClientCallback
-    ) = JsPeerConnectionClient(
-        peerUid, dir, privateConfig.dummyVideoTrack,
-        videoMaxBitrateBps, videoMaxFrameRate, callback
+    ): PeerConnectionClient = JsPeerConnectionClient(
+        peerUid, dir, privateConfig.dummyVideoTrack, videoMaxBitrateBps, videoMaxFrameRate, callback
     )
 
     override fun createLocalTracks() {
@@ -32,6 +31,12 @@ class JsPeerConnectionClientFactory(
     override fun addLocalTrackRenderer(renderer: Any) {
         if (renderer is HTMLVideoElement) {
             JsPeerConnectionClient.startLocalPreview(renderer)
+        }
+    }
+
+    override fun removeLocalTrackRenderer(renderer: Any) {
+        if (renderer is HTMLVideoElement) {
+            JsPeerConnectionClient.stopLocalPreview(renderer)
         }
     }
 

@@ -1,9 +1,9 @@
 package com.piasy.kmp.webrtc
 
-import WebRTC.*
-import WebRTC.RTCSdpType.RTCSdpTypeAnswer
-import WebRTC.RTCSdpType.RTCSdpTypeOffer
-import WebRTC.RTCSdpType.RTCSdpTypePrAnswer
+import cocoapods.WebRTC.*
+import cocoapods.WebRTC.RTCSdpType.RTCSdpTypeAnswer
+import cocoapods.WebRTC.RTCSdpType.RTCSdpTypeOffer
+import cocoapods.WebRTC.RTCSdpType.RTCSdpTypePrAnswer
 import com.piasy.kmp.webrtc.data.IceCandidate
 import com.piasy.kmp.webrtc.data.IceServer
 import com.piasy.kmp.webrtc.data.RtcStats
@@ -19,38 +19,25 @@ private class ObjCPeerConnectionClientCallback(callback: PeerConnectionClientCal
     CFPeerConnectionClientDelegateProtocol, NSObject() {
     private val realCallback = WeakReference(callback)
 
-    override fun onPreferCodecs(
-        peerUid: String,
-        sdp: String
-    ): String {
-        return realCallback.get()?.onPreferCodecs(peerUid, sdp) ?: sdp
-    }
+    override fun onPreferCodecs(peerUid: String, sdp: String) = realCallback.get()?.onPreferCodecs(peerUid, sdp) ?: sdp
 
-    override fun onLocalDescription(
-        peerUid: String,
-        localSdp: RTCSessionDescription
-    ) {
+    override fun onLocalDescription(peerUid: String, localSdp: RTCSessionDescription) {
         realCallback.get()?.onLocalDescription(peerUid, fromWebRTCSessionDescription(localSdp))
     }
 
-    override fun onIceCandidate(
-        peerUid: String,
-        candidate: RTCIceCandidate
-    ) {
+    override fun onSetRemoteSdpResult(peerUid: String, success: Boolean) {
+        realCallback.get()?.onSetRemoteSdpResult(peerUid, success)
+    }
+
+    override fun onIceCandidate(peerUid: String, candidate: RTCIceCandidate) {
         realCallback.get()?.onIceCandidate(peerUid, fromWebRTCIceCandidate(candidate))
     }
 
-    override fun onIceCandidatesRemoved(
-        peerUid: String,
-        candidates: List<*>
-    ) {
+    override fun onIceCandidatesRemoved(peerUid: String, candidates: List<*>) {
         realCallback.get()?.onIceCandidatesRemoved(peerUid, fromWebRTCIceCandidates(candidates))
     }
 
-    override fun onPeerConnectionStatsReady(
-        peerUid: String,
-        report: RTCStatisticsReport
-    ) {
+    override fun onPeerConnectionStatsReady(peerUid: String, report: RTCStatisticsReport) {
         realCallback.get()?.onPeerConnectionStatsReady(peerUid, fromWebRTCStatsReport(report))
     }
 
@@ -62,15 +49,12 @@ private class ObjCPeerConnectionClientCallback(callback: PeerConnectionClientCal
         realCallback.get()?.onIceDisconnected(peerUid)
     }
 
-    override fun onError(
-        peerUid: String,
-        code: CFPeerConnectionError
-    ) {
+    override fun onError(peerUid: String, code: CFPeerConnectionError) {
         realCallback.get()?.onError(peerUid, code.toInt())
     }
 }
 
-class ObjCPeerConnectionClient(
+internal class ObjCPeerConnectionClient(
     peerUid: String,
     private val dir: Int,
     needCaptureVideo: Boolean,
@@ -100,11 +84,19 @@ class ObjCPeerConnectionClient(
     }
 
     override fun setAudioReceivingEnabled(enable: Boolean) {
-        realClient.setAudioReceivingEnabled(enable)
+        realClient.setAudioReceivingEnabled(null, enable)
+    }
+
+    override fun setAudioReceivingEnabled(tid: String, enable: Boolean) {
+        realClient.setAudioReceivingEnabled(tid, enable)
     }
 
     override fun setVideoReceivingEnabled(enable: Boolean) {
-        realClient.setVideoReceivingEnabled(enable)
+        realClient.setVideoReceivingEnabled(null, enable)
+    }
+
+    override fun setVideoReceivingEnabled(tid: String, enable: Boolean) {
+        realClient.setVideoReceivingEnabled(tid, enable)
     }
 
     override fun createOffer() {
@@ -129,7 +121,19 @@ class ObjCPeerConnectionClient(
 
     override fun addRemoteTrackRenderer(renderer: Any) {
         if (renderer is RTCVideoRendererProtocol) {
-            realClient.addRemoteTrackRenderer(renderer)
+            realClient.addRemoteTrackRenderer(null, renderer)
+        }
+    }
+
+    override fun addRemoteTrackRenderer(tid: String, renderer: Any) {
+        if (renderer is RTCVideoRendererProtocol) {
+            realClient.addRemoteTrackRenderer(tid, renderer)
+        }
+    }
+
+    override fun removeRemoteTrackRenderer(tid: String, renderer: Any) {
+        if (renderer is RTCVideoRendererProtocol) {
+            realClient.removeRemoteTrackRenderer(tid, renderer)
         }
     }
 
@@ -226,4 +230,10 @@ private fun fromStats(stats: RTCStatistics): RtcStats {
     }
 
     return RtcStats(stats.id, stats.type, stats.timestamp_us.toLong(), members)
+}
+
+actual fun platformGetOfferForRtpCapabilities(block: (String) -> Unit) {
+    CFPeerConnectionClient.getOfferForRtpCapabilities {
+        block(it ?: "")
+    }
 }

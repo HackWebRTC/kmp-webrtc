@@ -5,5 +5,4 @@ target 'macApp' do
   platform :osx, '11.0'
   pod 'kmp_webrtc', :path => '../../kmp-webrtc/kmp_webrtc.podspec'
   pod 'WebRTC', :path => '../../libs/apple/WebRTC.podspec'
-  pod 'kmp_xlog', '~> 1.3.4'
 end

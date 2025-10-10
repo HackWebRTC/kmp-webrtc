@@ -38,10 +38,12 @@
 
 @implementation CallViewController {
     ARDSettingsModel* _settingsModel;
+    bool _singlePc;
     bool _isLandscape;
 
     Kmp_webrtcIOSPeerConnectionClientFactory* _pcClientFactory;
     id<Kmp_webrtcPeerConnectionClient> _pcClient;
+    id<Kmp_webrtcPeerConnectionClient> _recvPcClient;
     NSTimer* _statsTimer;
     CFAudioMixer* _mixer;
 
@@ -62,9 +64,11 @@
 }
 
 - (instancetype)initWithAudioOnly:(bool)audioOnly
+                         singlePc:(bool)singlePc
                       isLandscape:(bool)isLandscape {
     if (self = [super init]) {
         _settingsModel = [[ARDSettingsModel alloc] init];
+        _singlePc = singlePc;
         _isLandscape = isLandscape;
     }
     return self;
@@ -224,7 +228,13 @@
     _statsTimer = nil;
     [_pcClientFactory stopVideoCapture];
     [_pcClient close];
+    if (_recvPcClient) {
+        [_recvPcClient close];
+        _recvPcClient = nil;
+    }
     [_pcClientFactory destroyPeerConnectionFactory];
+    _pcClient = nil;
+    _pcClientFactory = nil;
 
     if (dismissView) {
         [self dismissViewControllerAnimated:YES completion:nil];
@@ -369,15 +379,26 @@
 
     // 5. create PcClient
     _pcClient = [_pcClientFactory createPeerConnectionClientPeerUid:@"test"
-                                                               dir:0
-                                                          hasVideo:YES
-                                                videoMaxBitrateBps:[[_settingsModel currentMaxBitrateSettingFromStore] intValue]
-                                                 videoMaxFrameRate:30
-                                                          callback:self];
+                           dir:0
+                      hasVideo:YES
+            videoMaxBitrateBps:[[_settingsModel currentMaxBitrateSettingFromStore] intValue]
+             videoMaxFrameRate:30
+                      callback:self];
+    if (!_singlePc) {
+        _recvPcClient = [_pcClientFactory createPeerConnectionClientPeerUid:@"test-recv"
+                               dir:0
+                          hasVideo:YES
+                videoMaxBitrateBps:[[_settingsModel currentMaxBitrateSettingFromStore] intValue]
+                 videoMaxFrameRate:30
+                          callback:self];
+    }
 
     // 6. create pc
     NSArray* iceServers = [NSArray array];
     [_pcClient createPeerConnectionIceServers:iceServers];
+    if (_recvPcClient) {
+        [_recvPcClient createPeerConnectionIceServers:iceServers];
+    }
 
     // 7. create offer
     [_pcClient createOffer];
@@ -387,13 +408,24 @@
 
 - (void)onLocalDescriptionPeerUid:(nonnull NSString *)peerUid sdp:(nonnull Kmp_webrtcSessionDescription *)sdp { 
     // 8. send offer to remote, get answer from remote, and set answer
-    Kmp_webrtcSessionDescription* answer = [[Kmp_webrtcSessionDescription alloc] initWithType:3 sdpDescription:sdp.sdpDescription];
-    [_pcClient setRemoteDescriptionSdp:answer];
+    if (_singlePc || [@"test-recv" isEqualToString:peerUid]) {
+        Kmp_webrtcSessionDescription* answer = [[Kmp_webrtcSessionDescription alloc] initWithType:3 sdpDescription:sdp.sdpDescription];
+        [_pcClient setRemoteDescriptionSdp:answer];
+    } else if ([@"test" isEqualToString:peerUid]) {
+        Kmp_webrtcSessionDescription* offer = [[Kmp_webrtcSessionDescription alloc] initWithType:1 sdpDescription:sdp.sdpDescription];
+        [_recvPcClient setRemoteDescriptionSdp:offer];
+        [_recvPcClient createAnswer];
+    }
 }
 
 - (void)onIceCandidatePeerUid:(nonnull NSString *)peerUid candidate:(nonnull Kmp_webrtcIceCandidate *)candidate {
     // 9. send ice candidate to remote, get ice candidate from remote, add ice candidate
-    [_pcClient addIceCandidateCandidate:candidate];
+    if (_singlePc || [@"test-recv" isEqualToString:peerUid]) {
+        [_pcClient addIceCandidateCandidate:candidate];
+    } else if ([@"test" isEqualToString:peerUid]) {
+        [_recvPcClient addIceCandidateCandidate:candidate];
+    }
+    
 }
 
 - (void)onIceConnectedPeerUid:(nonnull NSString *)peerUid {
@@ -405,7 +437,11 @@
             return;
         }
         // 10. on ice connected, add renderer for remote stream
-        [sself->_pcClient addRemoteTrackRendererRenderer:sself->_remoteRenderer];
+        if (sself->_singlePc) {
+            [sself->_pcClient addRemoteTrackRendererRenderer:sself->_remoteRenderer];
+        } else {
+            [sself->_recvPcClient addRemoteTrackRendererRenderer:sself->_remoteRenderer];
+        }
 
         [sself startGetStats];
     });
@@ -427,6 +463,10 @@
 }
 
 - (void)onIceDisconnectedPeerUid:(nonnull NSString *)peerUid {
+}
+
+- (void)onSetRemoteSdpResultPeerUid:(nonnull NSString *)peerUid success:(BOOL)success { 
+    NSLog(@"XXPXX onSetRemoteSdpResultPeerUid %@", peerUid);
 }
 
 #pragma mark - CFAudioMixerDelegate

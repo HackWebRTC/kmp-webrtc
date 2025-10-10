@@ -19,7 +19,7 @@ import org.webrtc.audio.JavaAudioDeviceModule
 data class AndroidPrivateConfig(
     internal val lifecycle: Lifecycle,
     internal val rootEglBase: EglBase,
-    internal val options: PeerConnectionFactory.Options,
+    internal val options: PeerConnectionFactory.Options = PeerConnectionFactory.Options(),
     internal val enableH264HighProfile: Boolean = true,
     internal val mediaProjectionPermissionResultData: Intent? = null,
     internal val recordSamplesReadyCallback: JavaAudioDeviceModule.SamplesReadyCallback? = null,
@@ -33,11 +33,11 @@ class AndroidPeerConnectionClientFactory(
     private val privateConfig: AndroidPrivateConfig,
 ) : PeerConnectionClientFactory(config, errorHandler, AndroidAudioDeviceManager(appContext, SpeakerphoneMode.AUTO)),
     DefaultLifecycleObserver {
+
     init {
         privateConfig.lifecycle.addObserver(this)
     }
 
-    private val rootEglBase = EglBase.create()
     private var videoCapturer: VideoCapturer? = null
     private var videoCapturePaused = false
 
@@ -69,7 +69,8 @@ class AndroidPeerConnectionClientFactory(
         peerUid: String, dir: Int, hasVideo: Boolean,
         videoMaxBitrateBps: Int, videoMaxFrameRate: Int,
         callback: PeerConnectionClientCallback
-    ) = AndroidPeerConnectionClient(peerUid, dir, hasVideo, videoMaxBitrateBps, videoMaxFrameRate, callback)
+    ): PeerConnectionClient =
+        AndroidPeerConnectionClient(peerUid, dir, hasVideo, videoMaxBitrateBps, videoMaxFrameRate, callback)
 
     override fun createLocalTracks() {
         val appContext = sAppContext ?: return
@@ -79,12 +80,18 @@ class AndroidPeerConnectionClientFactory(
             errorHandler(ERR_VIDEO_CAPTURER_CREATE_FAIL, "")
             return
         }
-        com.piasy.avconf.PeerConnectionClient.createLocalTracks(appContext, rootEglBase, videoCapturer)
+        com.piasy.avconf.PeerConnectionClient.createLocalTracks(appContext, privateConfig.rootEglBase, videoCapturer)
     }
 
     override fun addLocalTrackRenderer(renderer: Any) {
         if (renderer is VideoSink) {
             com.piasy.avconf.PeerConnectionClient.addLocalTrackRenderer(renderer)
+        }
+    }
+
+    override fun removeLocalTrackRenderer(renderer: Any) {
+        if (renderer is VideoSink) {
+            com.piasy.avconf.PeerConnectionClient.removeLocalTrackRenderer(renderer)
         }
     }
 
@@ -240,7 +247,6 @@ actual fun initializeWebRTC(context: Any?, fieldTrials: String, debugLog: Boolea
         "$storagePath/webrtc/log",
         if (debugLog) Logging.LEVEL_DEBUG else Logging.LEVEL_INFO,
         "webrtc",
-        debugLog
     )
 
     com.piasy.avconf.PeerConnectionClient.initialize(

@@ -10,21 +10,19 @@ object SdpManipulator {
         !it.contains("urn:3gpp:video-orientation")
     }
 
-    fun preferCodecs(
-        sdp: String,
-        codecTypes: List<Int>,
-        video: Boolean
-    ): String {
-        val hasAv1x = sdp.contains("AV1X/")
-        val av1CodecName = if (hasAv1x) "AV1X" else "AV1"
+    fun preferCodecsByName(sdp: String, codecTypes: List<String>, video: Boolean): String {
+        val preferredCodecs = ArrayList<String>()
+        preferredCodecs.addAll(codecTypes)
+        return preferCodec(sdp, preferredCodecs, video)
+    }
 
-        val preferredCodecs = LinkedHashSet<String>()
+    fun preferCodecsById(sdp: String, codecTypes: List<Int>, video: Boolean): String {
+        val av1CodecName = if (sdp.contains("AV1X/")) "AV1X" else "AV1"
+
+        val preferredCodecs = ArrayList<String>()
         for (codec in codecTypes) {
             preferredCodecs.add(codecName(codec, av1CodecName))
         }
-        preferredCodecs.add("red")
-        preferredCodecs.add("ulpfec")
-        preferredCodecs.add("flexfec-03")
 
         return preferCodec(sdp, preferredCodecs, video)
     }
@@ -33,10 +31,10 @@ object SdpManipulator {
         val lines = sdp.split("(\r\n|\n)".toRegex())
             .dropLastWhile { it.isEmpty() }
             .filter(DISABLE_CVO_FILTER)
-        return joinString(lines.filter(DISABLE_CVO_FILTER), "\r\n", true)
+        return lines.filter(DISABLE_CVO_FILTER).joinToString("\r\n", postfix = "\r\n")
     }
 
-    private fun codecName(codec: Int, av1CodecName: String = "AV1") = when (codec) {
+    fun codecName(codec: Int, av1CodecName: String = "AV1") = when (codec) {
         PeerConnectionClientFactory.VIDEO_CODEC_VP8 -> "VP8"
         PeerConnectionClientFactory.VIDEO_CODEC_VP9 -> "VP9"
         PeerConnectionClientFactory.VIDEO_CODEC_H264_BASELINE, PeerConnectionClientFactory.VIDEO_CODEC_H264_HIGH_PROFILE -> "H264"
@@ -45,12 +43,12 @@ object SdpManipulator {
         else -> "UNKNOWN"
     }
 
-    private fun preferCodec(
-        originalSdp: String,
-        preferredCodecs: LinkedHashSet<String>,
-        video: Boolean
-    ): String {
-        val lines = originalSdp.split("(\r\n|\n)".toRegex())
+    private fun preferCodec(sdp: String, preferredCodecs: ArrayList<String>, video: Boolean): String {
+        preferredCodecs.add("red")
+        preferredCodecs.add("ulpfec")
+        preferredCodecs.add("flexfec-03")
+
+        val lines = sdp.split("(\r\n|\n)".toRegex())
             .dropLastWhile { it.isEmpty() }
         val newLines = ArrayList<String>()
 
@@ -109,13 +107,10 @@ object SdpManipulator {
                 preferredPayloadTypes
             )
         }
-        return joinString(newLines.filter(DISABLE_CVO_FILTER), "\r\n", true)
+        return newLines.filter(DISABLE_CVO_FILTER).joinToString("\r\n", postfix = "\r\n")
     }
 
-    private fun containsValue(
-        payloadTypes: HashMap<String, ArrayList<String>>,
-        value: String
-    ): Boolean {
+    private fun containsValue(payloadTypes: HashMap<String, ArrayList<String>>, value: String): Boolean {
         for (v in payloadTypes.values) {
             for (s in v) {
                 if (s == value) {
@@ -126,11 +121,7 @@ object SdpManipulator {
         return false
     }
 
-    private fun putEntry(
-        payloadTypes: HashMap<String, ArrayList<String>>,
-        key: String,
-        value: String
-    ) {
+    private fun putEntry(payloadTypes: HashMap<String, ArrayList<String>>, key: String, value: String) {
         var payload = payloadTypes[key]
         if (payload == null) {
             payload = ArrayList()
@@ -141,7 +132,7 @@ object SdpManipulator {
 
     private fun changeMLine(
         mLine: String,
-        preferredCodecs: LinkedHashSet<String>,
+        preferredCodecs: List<String>,
         preferredPayloadTypes: HashMap<String, ArrayList<String>>
     ): String {
         val oldMLineParts = mLine.split(" ")
@@ -158,26 +149,6 @@ object SdpManipulator {
         if (rtxPayload != null) {
             newMLineParts.addAll(rtxPayload)
         }
-        return joinString(newMLineParts, " ", false)
-    }
-
-    private fun joinString(
-        strings: List<String>,
-        delimiter: String,
-        delimiterAtEnd: Boolean
-    ): String {
-        val iterator = strings.iterator()
-        if (!iterator.hasNext()) {
-            return ""
-        }
-        val builder = StringBuilder(iterator.next())
-        while (iterator.hasNext()) {
-            builder.append(delimiter)
-                .append(iterator.next())
-        }
-        if (delimiterAtEnd) {
-            builder.append(delimiter)
-        }
-        return builder.toString()
+        return newMLineParts.joinToString(" ")
     }
 }

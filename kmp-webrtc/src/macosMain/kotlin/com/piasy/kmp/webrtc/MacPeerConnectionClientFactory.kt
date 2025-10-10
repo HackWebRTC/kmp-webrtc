@@ -1,6 +1,6 @@
 package com.piasy.kmp.webrtc
 
-import WebRTC.*
+import cocoapods.WebRTC.*
 
 /**
  * Created by Piasy{github.com/Piasy} on 2025-02-27.

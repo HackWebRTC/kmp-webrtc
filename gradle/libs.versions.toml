@@ -1,23 +1,29 @@
 [versions]
 jvm = "17"
 iosDeploymentTarget = "14.0"
-compileSdk = "35"
+compileSdk = "36"
 minSdk = "21"
-targetSdk = "35"
-agp = "8.7.3"
-kotlin = "2.1.0"
+targetSdk = "36"
+agp = "8.13.0"
+kotlin = "2.2.20"
+coroutine = "1.10.2"
 permissionsDispatcher = "4.9.2"
+mockative = "3.0.1"
+kmpXlog = "1.5.0" # also used in build.gradle
 
 [libraries]
 kotlin-stdlib-js = { module = "org.jetbrains.kotlin:kotlin-stdlib-js", version.ref = "kotlin" }
-kotlinx-serialization-json = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0"
-kmpXlog = "com.piasy:kmp-xlog:1.4.1"
+kotlinx-serialization-json = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0"
+kmpXlog = { module = "com.piasy:kmp-xlog", version.ref = "kmpXlog" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutine" }
+
+mockative = { module = "io.mockative:mockative", version.ref = "mockative" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 
-androidx-appcompat = "androidx.appcompat:appcompat:1.7.0"
+androidx-appcompat = "androidx.appcompat:appcompat:1.7.1"
 permissionsDispatcher = { module = "com.github.permissions-dispatcher:permissionsdispatcher", version.ref = "permissionsDispatcher" }
 permissionsDispatcher-processor = { module = "com.github.permissions-dispatcher:permissionsdispatcher-processor", version.ref = "permissionsDispatcher" }
-androidx-lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.8.7"
+androidx-lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.9.4"
 
 [plugins]
 android-library = { id = "com.android.library", version.ref = "agp" }
@@ -26,6 +32,11 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kmp = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-versions = "com.github.ben-manes.versions:0.51.0"
-versionUpdate = "nl.littlerobots.version-catalog-update:0.8.5"
-vanniktech-mavenPublish = "com.vanniktech.maven.publish:0.30.0"
+# specify version will fail: The request for this plugin could not be satisfied because the plugin
+# is already on the classpath with an unknown version
+cocoapods = { id = "org.jetbrains.kotlin.native.cocoapods" }
+versions = "com.github.ben-manes.versions:0.53.0"
+versionUpdate = "nl.littlerobots.version-catalog-update:1.0.1"
+vanniktech-mavenPublish = "com.vanniktech.maven.publish:0.34.0"
+mockative = { id = "io.mockative", version.ref = "mockative" }
+allopen = { id = "org.jetbrains.kotlin.plugin.allopen", version.ref = "kotlin" }

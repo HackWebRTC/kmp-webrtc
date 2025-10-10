@@ -21,5 +21,10 @@ class FieldTrialTest {
             emptyMap<Any?, Any>(),
             FieldTrial.fieldTrialsStringToMap(str2)
         )
+
+        assertEquals(
+            emptyMap<Any?, Any>(),
+            FieldTrial.fieldTrialsStringToMap("")
+        )
     }
 }

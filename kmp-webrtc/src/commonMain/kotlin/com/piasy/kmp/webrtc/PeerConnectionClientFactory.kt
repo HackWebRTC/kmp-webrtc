@@ -1,6 +1,7 @@
 package com.piasy.kmp.webrtc
 
 import com.piasy.kmp.xlog.Logging
+import io.mockative.Mockable
 
 /**
  * Created by Piasy{github.com/Piasy} on 2025-02-16.
@@ -10,6 +11,7 @@ abstract class PeerConnectionClientFactory(
     protected val errorHandler: (Int, String) -> Unit,
     private val audioDeviceManager: AudioDeviceManager,
 ) {
+    @Mockable
     data class Config(
         val videoCaptureImpl: Int,
         val videoCaptureWidth: Int,
@@ -41,6 +43,7 @@ abstract class PeerConnectionClientFactory(
     abstract fun createLocalTracks()
 
     abstract fun addLocalTrackRenderer(renderer: Any)
+    abstract fun removeLocalTrackRenderer(renderer: Any)
 
     abstract fun startVideoCapture()
     abstract fun stopVideoCapture()
@@ -59,21 +62,16 @@ abstract class PeerConnectionClientFactory(
     }
 
     protected fun logI(content: String) {
-        Logging.info("$TAG@${hashCode()}", content)
+        Logging.info(TAG, "@${hashCode()} $content")
     }
 
     protected fun logE(content: String) {
-        Logging.error("$TAG@${hashCode()}", content)
+        Logging.error(TAG, "@${hashCode()} $content")
     }
 
     companion object {
         internal const val TAG = "PCClientFactory"
         internal var sInitialized = false
-
-        const val DIR_SEND_RECV = 0
-        const val DIR_SEND_ONLY = 1
-        const val DIR_RECV_ONLY = 2
-        const val DIR_INACTIVE = 3
 
         const val VIDEO_CODEC_VP8 = 1
         const val VIDEO_CODEC_VP9 = 2

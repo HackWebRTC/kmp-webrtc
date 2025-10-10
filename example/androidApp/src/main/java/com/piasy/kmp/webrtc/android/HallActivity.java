@@ -19,6 +19,7 @@ import permissions.dispatcher.RuntimePermissions;
 public class HallActivity extends Activity {
 
   public static final String EXTRA_IS_PUBLISHER = "avconf.IS_PUBLISHER";
+  public static final String EXTRA_SINGLE_PC = "avconf.SINGLE_PC";
   public static final String EXTRA_AUDIO_ONLY = "avconf.AUDIO_ONLY";
   public static final String EXTRA_RECORD_CALL = "avconf.RECORD_CALL";
   public static final String EXTRA_VIDEO_WIDTH = "avconf.VIDEO_WIDTH";
@@ -35,6 +36,7 @@ public class HallActivity extends Activity {
   private String keyprefVideoBitrateValue;
 
   private CheckBox mRecording;
+  private CheckBox mSinglePc;
   private CheckBox mAudioOnly;
   private CheckBox mPublisher;
   private CheckBox mScreenShare;
@@ -59,6 +61,7 @@ public class HallActivity extends Activity {
     tvVersion.setText("kmp-webrtc " + BuildConfig.VERSION_NAME);
 
     mRecording = findViewById(R.id.recording);
+    mSinglePc = findViewById(R.id.single_pc);
     mAudioOnly = findViewById(R.id.audio_only);
     mPublisher = findViewById(R.id.publisher);
     mScreenShare = findViewById(R.id.screen_share);
@@ -84,7 +87,8 @@ public class HallActivity extends Activity {
       Manifest.permission.MODIFY_AUDIO_SETTINGS,
       Manifest.permission.BLUETOOTH,
       Manifest.permission.WRITE_EXTERNAL_STORAGE,
-      Manifest.permission.ACCESS_NETWORK_STATE
+      Manifest.permission.ACCESS_NETWORK_STATE,
+      Manifest.permission.BLUETOOTH_CONNECT,
   })
   void checkPermission() {
     mGotPermission = true;
@@ -145,6 +149,7 @@ public class HallActivity extends Activity {
     // Start AppRTCMobile activity.
     Intent intent = new Intent(this, activityClass);
     intent.putExtra(EXTRA_IS_PUBLISHER, mPublisher.isChecked());
+    intent.putExtra(EXTRA_SINGLE_PC, mSinglePc.isChecked());
     intent.putExtra(EXTRA_AUDIO_ONLY, mAudioOnly.isChecked());
     intent.putExtra(EXTRA_RECORD_CALL, mRecording.isChecked());
     intent.putExtra(EXTRA_VIDEO_WIDTH, videoWidth);

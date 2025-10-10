@@ -6,7 +6,7 @@ package com.piasy.kmp.webrtc.utils
 internal object FieldTrial {
     fun fieldTrialsStringToMap(fieldTrials: String): Map<Any?, *> {
         val map = HashMap<Any?, String>()
-        if (fieldTrials.last() != '/') {
+        if (fieldTrials.isEmpty() || fieldTrials.last() != '/') {
             return map
         }
         val parts = fieldTrials.substring(0, fieldTrials.length - 1).split("/")
