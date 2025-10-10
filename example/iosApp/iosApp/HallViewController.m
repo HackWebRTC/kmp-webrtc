@@ -16,6 +16,7 @@
 static NSString* const barButtonImageString = @"ic_settings_black_24dp.png";
 
 @implementation HallViewController {
+    UISwitch* _singlePcSwitch;
     UISwitch* _audioOnlySwitch;
 }
 
@@ -44,6 +45,17 @@ static NSString* const barButtonImageString = @"ic_settings_black_24dp.png";
     _audioOnlySwitch = [[UISwitch alloc] init];
     [switchStackView addArrangedSubview:_audioOnlySwitch];
 
+    UIStackView *switchStackView2 = [[UIStackView alloc] init];
+    switchStackView2.axis = UILayoutConstraintAxisHorizontal;
+    switchStackView2.distribution = UIStackViewDistributionFillProportionally;
+    switchStackView2.spacing = 10;
+    UILabel *switchLabel2 = [[UILabel alloc] init];
+    switchLabel2.text = @"Single pc";
+    switchLabel2.font = [UIFont systemFontOfSize:20];
+    [switchStackView2 addArrangedSubview:switchLabel2];
+    _singlePcSwitch = [[UISwitch alloc] init];
+    [switchStackView2 addArrangedSubview:_singlePcSwitch];
+
     UIButton* shareLog = [UIButton buttonWithType:UIButtonTypeSystem];
     [shareLog setTitle:@"share log" forState:UIControlStateNormal];
     [shareLog addTarget:self
@@ -62,14 +74,15 @@ static NSString* const barButtonImageString = @"ic_settings_black_24dp.png";
     stackView.spacing = 10;
 
     [stackView addArrangedSubview:loopback];
+    [stackView addArrangedSubview:switchStackView2];
     [stackView addArrangedSubview:switchStackView];
     [stackView addArrangedSubview:shareLog];
     [stackView addArrangedSubview:version];
     [self.view addSubview:stackView];
 
-    // 使用 Auto Layout 约束 StackView 的位置和大小
+    // use Auto Layout constrain StackView pos & size
     stackView.translatesAutoresizingMaskIntoConstraints = NO;
-    // 水平居中
+    // center horizontal
     NSLayoutConstraint *centerXConstraint =
         [NSLayoutConstraint constraintWithItem:stackView
                                      attribute:NSLayoutAttributeCenterX
@@ -78,7 +91,7 @@ static NSString* const barButtonImageString = @"ic_settings_black_24dp.png";
                                      attribute:NSLayoutAttributeCenterX
                                     multiplier:1.0
                                       constant:0];
-    // 距离顶部 50
+    // top margin 50
     NSLayoutConstraint *topConstraint =
         [NSLayoutConstraint constraintWithItem:stackView
                                      attribute:NSLayoutAttributeTop
@@ -87,7 +100,7 @@ static NSString* const barButtonImageString = @"ic_settings_black_24dp.png";
                                      attribute:NSLayoutAttributeTop
                                     multiplier:1.0
                                       constant:50];
-    // 激活约束
+    // activate constraints
     [NSLayoutConstraint activateConstraints:@[centerXConstraint, topConstraint]];
 }
 
@@ -144,7 +157,9 @@ static NSString* const barButtonImageString = @"ic_settings_black_24dp.png";
 }
 
 - (void)onLoopback:(id)sender {
-    CallViewController* viewController = [[CallViewController alloc] initWithAudioOnly:_audioOnlySwitch.isOn isLandscape:false];
+    CallViewController* viewController = [[CallViewController alloc] initWithAudioOnly:_audioOnlySwitch.isOn
+                                                                              singlePc:_singlePcSwitch.isOn
+                                                                           isLandscape:false];
     viewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
     [self presentViewController:viewController animated:YES completion:nil];
     [[UIApplication sharedApplication] setIdleTimerDisabled:YES];

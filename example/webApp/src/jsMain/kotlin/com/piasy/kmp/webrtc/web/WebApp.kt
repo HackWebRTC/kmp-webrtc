@@ -57,11 +57,11 @@ fun startLoopback() {
 
     // 5. create PcClient
     localPcClient = pcClientFactory?.createPeerConnectionClient(
-        "test_local", PeerConnectionClientFactory.DIR_SEND_ONLY, true,
+        "test_local", PeerConnectionClient.DIR_SEND_ONLY, true,
         800_000, 30, localPcClientCallback
     )
     remotePcClient = pcClientFactory?.createPeerConnectionClient(
-        "test_remote", PeerConnectionClientFactory.DIR_RECV_ONLY, true,
+        "test_remote", PeerConnectionClient.DIR_RECV_ONLY, true,
         800_000, 30, remotePcClientCallback
     )
 

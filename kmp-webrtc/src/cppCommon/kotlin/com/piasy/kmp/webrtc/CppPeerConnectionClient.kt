@@ -19,9 +19,7 @@ private fun freeKString(ptr: CPointer<ByteVar>?) {
 }
 
 private fun pcClientCallbackOnPreferCodecs(
-    opaque: COpaquePointer?,
-    peerUidPtr: CPointer<ByteVar>?,
-    sdpPtr: CPointer<ByteVar>?
+    opaque: COpaquePointer?, peerUidPtr: CPointer<ByteVar>?, sdpPtr: CPointer<ByteVar>?
 ): CPointer<ByteVar>? {
     if (opaque == null) {
         return null
@@ -48,10 +46,7 @@ private fun pcClientCallbackOnPreferCodecs(
 }
 
 private fun pcClientCallbackOnLocalDescription(
-    opaque: COpaquePointer?,
-    peerUidPtr: CPointer<ByteVar>?,
-    type: Int,
-    descriptionPtr: CPointer<ByteVar>?
+    opaque: COpaquePointer?, peerUidPtr: CPointer<ByteVar>?, type: Int, descriptionPtr: CPointer<ByteVar>?
 ) {
     if (opaque == null) {
         return
@@ -68,11 +63,8 @@ private fun pcClientCallbackOnLocalDescription(
 }
 
 private fun pcClientCallbackOnIceCandidate(
-    opaque: COpaquePointer?,
-    peerUidPtr: CPointer<ByteVar>?,
-    sdpMidPtr: CPointer<ByteVar>?,
-    sdpMlineIndex: Int,
-    sdpPtr: CPointer<ByteVar>?
+    opaque: COpaquePointer?, peerUidPtr: CPointer<ByteVar>?, sdpMidPtr: CPointer<ByteVar>?,
+    sdpMlineIndex: Int, sdpPtr: CPointer<ByteVar>?
 ) {
     if (opaque == null) {
         return
@@ -90,9 +82,7 @@ private fun pcClientCallbackOnIceCandidate(
 }
 
 private fun pcClientCallbackOnPeerConnectionStatsReady(
-    opaque: COpaquePointer?,
-    peerUidPtr: CPointer<ByteVar>?,
-    statsPtr: CPointer<ByteVar>?
+    opaque: COpaquePointer?, peerUidPtr: CPointer<ByteVar>?, statsPtr: CPointer<ByteVar>?
 ) {
     if (opaque == null) {
         return
@@ -114,8 +104,7 @@ private fun pcClientCallbackOnPeerConnectionStatsReady(
 }
 
 private fun pcClientCallbackOnIceConnected(
-    opaque: COpaquePointer?,
-    peerUidPtr: CPointer<ByteVar>?
+    opaque: COpaquePointer?, peerUidPtr: CPointer<ByteVar>?
 ) {
     if (opaque == null) {
         return
@@ -128,8 +117,7 @@ private fun pcClientCallbackOnIceConnected(
 }
 
 private fun pcClientCallbackOnIceDisconnected(
-    opaque: COpaquePointer?,
-    peerUidPtr: CPointer<ByteVar>?
+    opaque: COpaquePointer?, peerUidPtr: CPointer<ByteVar>?
 ) {
     if (opaque == null) {
         return
@@ -142,9 +130,7 @@ private fun pcClientCallbackOnIceDisconnected(
 }
 
 private fun pcClientCallbackOnError(
-    opaque: COpaquePointer?,
-    peerUidPtr: CPointer<ByteVar>?,
-    code: Int
+    opaque: COpaquePointer?, peerUidPtr: CPointer<ByteVar>?, code: Int
 ) {
     if (opaque == null) {
         return
@@ -176,7 +162,7 @@ internal fun setPcClientLogCallback(severity: LogSeverity) {
     WebRTC.PCClientSetLogCallback(staticCFunction(::pcClientLogCallback), severity.ordinal)
 }
 
-abstract class CppPeerConnectionClient(
+internal abstract class CppPeerConnectionClient(
     peerUid: String,
     private val dir: Int,
     needCaptureVideo: Boolean,
@@ -220,8 +206,16 @@ abstract class CppPeerConnectionClient(
         WebRTC.PCClientSetAudioReceivingEnabled(realClient, if (enable) 1 else 0)
     }
 
+    override fun setAudioReceivingEnabled(tid: String, enable: Boolean) {
+        //TODO("Not yet implemented")
+    }
+
     override fun setVideoReceivingEnabled(enable: Boolean) {
         WebRTC.PCClientSetVideoReceivingEnabled(realClient, if (enable) 1 else 0)
+    }
+
+    override fun setVideoReceivingEnabled(tid: String, enable: Boolean) {
+        //TODO("Not yet implemented")
     }
 
     override fun createOffer() {
@@ -284,4 +278,8 @@ abstract class CppPeerConnectionClient(
             ignoreUnknownKeys = true
         }
     }
+}
+
+actual fun platformGetOfferForRtpCapabilities(block: (String) -> Unit) {
+    // TODO
 }

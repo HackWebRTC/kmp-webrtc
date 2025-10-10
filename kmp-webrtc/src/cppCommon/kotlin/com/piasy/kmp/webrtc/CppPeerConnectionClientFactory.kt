@@ -33,9 +33,6 @@ abstract class CppPeerConnectionClientFactory(
 
     protected abstract fun createVideoCapturer(): COpaquePointer?
 
-    override fun addLocalTrackRenderer(renderer: Any) {
-    }
-
     override fun startVideoCapture() {
         logI("startVideoCapture $videoCapturer")
         if (videoCapturer != null) {
@@ -71,7 +68,7 @@ actual fun initializeWebRTC(context: Any?, fieldTrials: String, debugLog: Boolea
         )
         return true
     }
-    initializeMarsXLog(if (debugLog) Logging.LEVEL_DEBUG else Logging.LEVEL_INFO, "webrtc", debugLog)
+    initializeMarsXLog(if (debugLog) Logging.LEVEL_DEBUG else Logging.LEVEL_INFO, "webrtc")
     setPcClientLogCallback(if (debugLog) LogSeverity.Verbose else LogSeverity.Info)
     if (WebRTC.PCClientInitialize(fieldTrials) != 0) {
         return false

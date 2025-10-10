@@ -24,12 +24,19 @@ class LinuxPeerConnectionClientFactory(
         peerUid: String, dir: Int, hasVideo: Boolean,
         videoMaxBitrateBps: Int, videoMaxFrameRate: Int,
         callback: PeerConnectionClientCallback
-    ) = LinuxPeerConnectionClient(peerUid, dir, hasVideo, videoMaxBitrateBps, videoMaxFrameRate, callback)
+    ): PeerConnectionClient =
+        LinuxPeerConnectionClient(peerUid, dir, hasVideo, videoMaxBitrateBps, videoMaxFrameRate, callback)
 
     override fun createVideoCapturer() = WebRTC.PCClientVideoCapturerCreate(
         config.videoCaptureImpl, config.videoCaptureWidth, config.videoCaptureHeight,
         config.videoCaptureFps, privateConfig.captureFilePath, privateConfig.captureDumpPath
     )
+
+    override fun addLocalTrackRenderer(renderer: Any) {
+    }
+
+    override fun removeLocalTrackRenderer(renderer: Any) {
+    }
 }
 
 actual fun createPeerConnectionClientFactory(

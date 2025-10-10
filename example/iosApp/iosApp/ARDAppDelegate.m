@@ -10,27 +10,28 @@
 
 #import "ARDAppDelegate.h"
 
-#import "HallViewController.h"
+#import "SceneDelegate.h"
 
-@implementation ARDAppDelegate {
-  UIWindow *_window;
-}
+@implementation ARDAppDelegate
 
 #pragma mark - UIApplicationDelegate methods
 
-- (BOOL)application:(UIApplication *)application
-    didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // 这里可以保留你的全局初始化代码
+    return YES;
+}
 
-  _window =  [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-  [_window makeKeyAndVisible];
-  HallViewController *viewController = [[HallViewController alloc] init];
+#pragma mark - UISceneSession lifecycle (iOS 13+)
 
-  UINavigationController *root =
-      [[UINavigationController alloc] initWithRootViewController:viewController];
-  root.navigationBar.translucent = NO;
-  _window.rootViewController = root;
+- (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession options:(UISceneConnectionOptions *)options {
+    // 当创建新场景时调用，返回一个场景配置对象
+    UISceneConfiguration *configuration = [[UISceneConfiguration alloc] initWithName:@"Default Configuration" sessionRole:connectingSceneSession.role];
+    configuration.delegateClass = [SceneDelegate class];
+    return configuration;
+}
 
-  return YES;
+- (void)application:(UIApplication *)application didDiscardSceneSessions:(NSSet<UISceneSession *> *)sceneSessions {
+    // 当用户丢弃场景会话时调用
 }
 
 @end

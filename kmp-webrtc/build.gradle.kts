@@ -1,36 +1,23 @@
-import com.vanniktech.maven.publish.SonatypeHost
-
 plugins {
     alias(libs.plugins.kmp)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.android.library)
-    // alias will fail, see https://github.com/gradle/gradle/issues/20084
-    id("org.jetbrains.kotlin.native.cocoapods")
+    alias(libs.plugins.cocoapods)
+    alias(libs.plugins.allopen)
 }
 
 version = Consts.releaseVersion
 group = Consts.releaseGroup
 
+val projectRoot = project.rootProject.projectDir
+
 kotlin {
-    val appleTargets = mapOf(
-        iosArm64() to "ios-arm64",
-        iosSimulatorArm64() to "ios-arm64_x86_64-simulator",
-        iosX64() to "ios-arm64_x86_64-simulator",
-        macosX64() to "macos-arm64_x86_64",
-        macosArm64() to "macos-arm64_x86_64",
-    )
-    appleTargets.keys.forEach {
-        it.compilations.getByName("main").cinterops {
-            val webrtc by creating {
-                definitionFile.set(project.file("src/appleMain/cinterop/WebRTC.def"))
-                compilerOpts(
-                    "-framework", "WebRTC",
-                    "-F${project.rootProject.projectDir}/libs/apple/WebRTC.xcframework/${appleTargets[it]}"
-                )
-            }
-        }
-    }
+    iosArm64()
+    iosSimulatorArm64()
+    iosX64()
+    macosX64()
+    macosArm64()
 
     cocoapods {
         summary = "KMP wrapper for WebRTC."
@@ -42,6 +29,14 @@ kotlin {
         framework {
             baseName = "kmp_webrtc"
             isStatic = true
+        }
+
+        pod("WebRTC") {
+            source = path(project.file("$projectRoot/libs/apple/"))
+        }
+
+        pod("kmp_xlog") {
+            version = libs.versions.kmpXlog.get()
         }
     }
 
@@ -60,13 +55,13 @@ kotlin {
             val webrtc by creating {
                 definitionFile.set(project.file("src/cppCommon/cinterop/WebRTC.def"))
                 includeDirs {
-                    allHeaders("${rootProject.projectDir}/libs/windows_linux/include")
+                    allHeaders("$projectRoot/libs/windows_linux/include")
                 }
             }
         }
         binaries {
             all {
-                linkerOpts.addAll(listOf("-L${rootProject.projectDir}/libs/windows/x64", "-lwin_pc_client.dll"))
+                linkerOpts.addAll(listOf("-L$projectRoot/libs/windows/x64", "-lwin_pc_client.dll"))
                 //freeCompilerArgs = listOf("-Xadd-light-debug=enable")
             }
             sharedLib {
@@ -80,13 +75,13 @@ kotlin {
             val webrtc by creating {
                 definitionFile.set(project.file("src/cppCommon/cinterop/WebRTC.def"))
                 includeDirs {
-                    allHeaders("${rootProject.projectDir}/libs/windows_linux/include")
+                    allHeaders("$projectRoot/libs/windows_linux/include")
                 }
             }
         }
         binaries {
             all {
-                linkerOpts.addAll(listOf("-L${rootProject.projectDir}/libs/linux/x64", "-llinux_pc_client"))
+                linkerOpts.addAll(listOf("-L$projectRoot/libs/linux/x64", "-llinux_pc_client"))
                 //freeCompilerArgs = listOf("-Xadd-light-debug=enable")
             }
             sharedLib {
@@ -105,8 +100,10 @@ kotlin {
 
         commonMain {
             dependencies {
+                api(libs.kotlinx.coroutines.core)
                 api(libs.kotlinx.serialization.json)
                 api(libs.kmpXlog)
+                implementation(libs.mockative)
             }
         }
         commonTest {
@@ -163,7 +160,7 @@ android {
 }
 
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral()
 
     signAllPublications()
 
@@ -194,4 +191,8 @@ mavenPublishing {
             developerConnection = "scm:git:git://github.com/HackWebRTC/kmp-webrtc.git"
         }
     }
+}
+
+allOpen {
+    annotation("io.mockative.Mockable")
 }

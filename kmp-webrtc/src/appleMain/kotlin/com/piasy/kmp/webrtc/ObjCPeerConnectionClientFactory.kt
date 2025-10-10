@@ -1,6 +1,6 @@
 package com.piasy.kmp.webrtc
 
-import WebRTC.*
+import cocoapods.WebRTC.*
 import com.piasy.kmp.webrtc.utils.FieldTrial
 import com.piasy.kmp.xlog.Logging
 import com.piasy.kmp.xlog.initializeMarsXLog
@@ -24,7 +24,8 @@ abstract class ObjCPeerConnectionClientFactory(
         peerUid: String, dir: Int, hasVideo: Boolean,
         videoMaxBitrateBps: Int, videoMaxFrameRate: Int,
         callback: PeerConnectionClientCallback
-    ) = ObjCPeerConnectionClient(peerUid, dir, hasVideo, videoMaxBitrateBps, videoMaxFrameRate, callback)
+    ): PeerConnectionClient =
+        ObjCPeerConnectionClient(peerUid, dir, hasVideo, videoMaxBitrateBps, videoMaxFrameRate, callback)
 
     override fun createLocalTracks() {
         // OWT requires video in SDP, so must have video track
@@ -61,6 +62,12 @@ abstract class ObjCPeerConnectionClientFactory(
         }
     }
 
+    override fun removeLocalTrackRenderer(renderer: Any) {
+        if (renderer is RTCVideoRendererProtocol) {
+            CFPeerConnectionClient.removeLocalTrackRenderer(renderer)
+        }
+    }
+
     override fun adaptVideoOutputFormat(width: Int, height: Int, fps: Int) {
         CFPeerConnectionClient.adaptVideoOutputFormat(width, height, fps)
     }
@@ -83,7 +90,7 @@ actual fun initializeWebRTC(context: Any?, fieldTrials: String, debugLog: Boolea
         )
         return true
     }
-    initializeMarsXLog(if (debugLog) Logging.LEVEL_DEBUG else Logging.LEVEL_INFO, "webrtc", debugLog)
+    initializeMarsXLog(if (debugLog) Logging.LEVEL_DEBUG else Logging.LEVEL_INFO, "webrtc")
     ObjCPeerConnectionClientFactory.logger.severity = if (debugLog) {
         RTCLoggingSeverity.RTCLoggingSeverityVerbose
     } else {

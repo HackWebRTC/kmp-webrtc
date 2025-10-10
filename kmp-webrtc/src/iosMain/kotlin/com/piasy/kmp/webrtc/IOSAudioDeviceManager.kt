@@ -1,6 +1,6 @@
 package com.piasy.kmp.webrtc
 
-import WebRTC.*
+import cocoapods.WebRTC.*
 import com.piasy.kmp.webrtc.AudioDevice.BLUETOOTH
 import com.piasy.kmp.webrtc.AudioDevice.EARPIECE
 import com.piasy.kmp.webrtc.AudioDevice.NONE

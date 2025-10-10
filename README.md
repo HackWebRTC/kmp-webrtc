@@ -71,14 +71,14 @@ Open the project (the repo root dir) in Android studio, and run the example.andr
 ### iOS
 
 ```bash
-./scripts/setup_apple.sh
+./scripts/setup_apple_demo.sh
 # open example/iosApp/iosApp.xcworkspace in Xcode, and run it.
 ```
 
 ### macOS
 
 ```bash
-./scripts/setup_apple.sh
+./scripts/setup_apple_demo.sh
 # open example/macApp/macApp.xcworkspace in Xcode, and run it.
 ```
 
@@ -91,6 +91,8 @@ Open the project (the repo root dir) in Android studio, and run the example.andr
 
 ### Linux
 
+On Linux machine with GUI support.
+
 ```bash
 ./scripts/build_linux_demo.sh
 ./example/linuxApp/build/loopback <path to video file>
@@ -99,7 +101,7 @@ Open the project (the repo root dir) in Android studio, and run the example.andr
 ### JS
 
 ```bash
-./gradlew :example:webApp:jsBrowserRun
+./gradlew :example:webApp:jsBrowserDevelopmentRun
 ```
 
 ## Build WebRTC

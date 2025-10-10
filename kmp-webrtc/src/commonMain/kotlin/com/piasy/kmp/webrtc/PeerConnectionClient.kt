@@ -4,6 +4,7 @@ import com.piasy.kmp.webrtc.data.IceCandidate
 import com.piasy.kmp.webrtc.data.IceServer
 import com.piasy.kmp.webrtc.data.RtcStatsReport
 import com.piasy.kmp.webrtc.data.SessionDescription
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 /**
  * Created by Piasy{github.com/Piasy} on 2019-11-26.
@@ -19,8 +20,10 @@ interface PeerConnectionClient {
     fun setVideoSendingEnabled(enable: Boolean)
 
     fun setAudioReceivingEnabled(enable: Boolean)
+    fun setAudioReceivingEnabled(tid: String, enable: Boolean)
 
     fun setVideoReceivingEnabled(enable: Boolean)
+    fun setVideoReceivingEnabled(tid: String, enable: Boolean)
 
     fun createOffer()
 
@@ -33,15 +36,14 @@ interface PeerConnectionClient {
     fun setRemoteDescription(sdp: SessionDescription)
 
     fun addRemoteTrackRenderer(renderer: Any)
+    fun addRemoteTrackRenderer(tid: String, renderer: Any)
+    fun removeRemoteTrackRenderer(tid: String, renderer: Any)
 
     fun send(): Boolean
 
     fun receive(): Boolean
 
-    fun startRecorder(
-        dir: Int,
-        path: String
-    ): Int
+    fun startRecorder(dir: Int, path: String): Int
 
     fun stopRecorder(dir: Int): Int
 
@@ -97,43 +99,31 @@ interface PeerConnectionClient {
                 else -> "UNKNOWN"
             }
         }
+
+        suspend fun getOfferForRtpCapabilities(): String = suspendCancellableCoroutine { continuation ->
+            platformGetOfferForRtpCapabilities { continuation.resume(it) { _, _, _ -> } }
+        }
     }
 }
 
 interface PeerConnectionClientCallback {
-    fun onPreferCodecs(
-        peerUid: String,
-        sdp: String
-    ): String
+    fun onPreferCodecs(peerUid: String, sdp: String): String
 
-    fun onLocalDescription(
-        peerUid: String,
-        sdp: SessionDescription
-    )
+    fun onLocalDescription(peerUid: String, sdp: SessionDescription)
 
-    fun onIceCandidate(
-        peerUid: String,
-        candidate: IceCandidate
-    )
+    fun onSetRemoteSdpResult(peerUid: String, success: Boolean) {}
 
-    fun onIceCandidatesRemoved(
-        peerUid: String,
-        candidates: List<IceCandidate>
-    )
+    fun onIceCandidate(peerUid: String, candidate: IceCandidate)
 
-    fun onPeerConnectionStatsReady(
-        peerUid: String,
-        report: RtcStatsReport
-    )
+    fun onIceCandidatesRemoved(peerUid: String, candidates: List<IceCandidate>)
+
+    fun onPeerConnectionStatsReady(peerUid: String, report: RtcStatsReport)
 
     fun onIceConnected(peerUid: String)
 
     fun onIceDisconnected(peerUid: String)
 
-    fun onError(
-        peerUid: String,
-        code: Int
-    )
+    fun onError(peerUid: String, code: Int)
 
     companion object {
         const val ERR_NO_FACTORY = 1000
@@ -158,3 +148,5 @@ interface PeerConnectionClientCallback {
         }
     }
 }
+
+expect fun platformGetOfferForRtpCapabilities(block: (String) -> Unit)

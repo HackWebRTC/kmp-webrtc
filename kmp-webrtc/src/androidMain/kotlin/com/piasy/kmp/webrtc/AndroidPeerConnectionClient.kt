@@ -20,38 +20,25 @@ import org.webrtc.VideoSink
  */
 private class AndroidPeerConnectionClientCallback(private val callback: PeerConnectionClientCallback) :
     com.piasy.avconf.PeerConnectionClientCallback {
-    override fun onPreferCodecs(
-        peerUid: String,
-        sdp: String
-    ): String {
-        return callback.onPreferCodecs(peerUid, sdp)
+    override fun onPreferCodecs(peerUid: String, sdp: String) = callback.onPreferCodecs(peerUid, sdp)
+
+    override fun onLocalDescription(peerUid: String, sdp: org.webrtc.SessionDescription) {
+        callback.onLocalDescription(peerUid, fromWebRTCSessionDescription(sdp))
     }
 
-    override fun onLocalDescription(
-        peerUid: String,
-        sdp: org.webrtc.SessionDescription
-    ) {
-        return callback.onLocalDescription(peerUid, fromWebRTCSessionDescription(sdp))
+    override fun onSetRemoteSdpResult(peerUid: String, success: Boolean) {
+        callback.onSetRemoteSdpResult(peerUid, success)
     }
 
-    override fun onIceCandidate(
-        peerUid: String,
-        candidate: org.webrtc.IceCandidate
-    ) {
+    override fun onIceCandidate(peerUid: String, candidate: org.webrtc.IceCandidate) {
         callback.onIceCandidate(peerUid, fromWebRTCIceCandidate(candidate))
     }
 
-    override fun onIceCandidatesRemoved(
-        peerUid: String,
-        candidates: List<org.webrtc.IceCandidate>
-    ) {
+    override fun onIceCandidatesRemoved(peerUid: String, candidates: List<org.webrtc.IceCandidate>) {
         callback.onIceCandidatesRemoved(peerUid, fromWebRTCIceCandidates(candidates))
     }
 
-    override fun onPeerConnectionStatsReady(
-        peerUid: String,
-        report: RTCStatsReport
-    ) {
+    override fun onPeerConnectionStatsReady(peerUid: String, report: RTCStatsReport) {
         callback.onPeerConnectionStatsReady(peerUid, fromWebRTCStatsReport(report))
     }
 
@@ -63,15 +50,12 @@ private class AndroidPeerConnectionClientCallback(private val callback: PeerConn
         callback.onIceDisconnected(peerUid)
     }
 
-    override fun onError(
-        peerUid: String,
-        code: Int
-    ) {
+    override fun onError(peerUid: String, code: Int) {
         callback.onError(peerUid, code)
     }
 }
 
-class AndroidPeerConnectionClient(
+internal class AndroidPeerConnectionClient(
     peerUid: String,
     private val dir: Int,
     needCaptureVideo: Boolean,
@@ -101,11 +85,19 @@ class AndroidPeerConnectionClient(
     }
 
     override fun setAudioReceivingEnabled(enable: Boolean) {
-        realClient.setAudioReceivingEnabled(enable)
+        realClient.setAudioReceivingEnabled(null, enable)
+    }
+
+    override fun setAudioReceivingEnabled(tid: String, enable: Boolean) {
+        realClient.setAudioReceivingEnabled(tid, enable)
     }
 
     override fun setVideoReceivingEnabled(enable: Boolean) {
-        realClient.setVideoReceivingEnabled(enable)
+        realClient.setVideoReceivingEnabled(null, enable)
+    }
+
+    override fun setVideoReceivingEnabled(tid: String, enable: Boolean) {
+        realClient.setVideoReceivingEnabled(tid, enable)
     }
 
     override fun createOffer() {
@@ -130,7 +122,19 @@ class AndroidPeerConnectionClient(
 
     override fun addRemoteTrackRenderer(renderer: Any) {
         if (renderer is VideoSink) {
-            realClient.addRemoteTrackRenderer(renderer)
+            realClient.addRemoteTrackRenderer(null, renderer)
+        }
+    }
+
+    override fun addRemoteTrackRenderer(tid: String, renderer: Any) {
+        if (renderer is VideoSink) {
+            realClient.addRemoteTrackRenderer(tid, renderer)
+        }
+    }
+
+    override fun removeRemoteTrackRenderer(tid: String, renderer: Any) {
+        if (renderer is VideoSink) {
+            realClient.removeRemoteTrackRenderer(tid, renderer)
         }
     }
 
@@ -253,4 +257,8 @@ private fun fromStats(stats: org.webrtc.RTCStats): RtcStats {
     }
 
     return RtcStats(stats.id, stats.type, stats.timestampUs.toLong(), members)
+}
+
+actual fun platformGetOfferForRtpCapabilities(block: (String) -> Unit) {
+    com.piasy.avconf.PeerConnectionClient.getOfferForRtpCapabilities(block)
 }

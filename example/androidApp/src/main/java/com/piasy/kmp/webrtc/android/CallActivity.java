@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.View;
@@ -44,14 +45,7 @@ import org.webrtc.RendererCommon;
 
 import static com.piasy.kmp.webrtc.AndroidPeerConnectionClientFactoryKt.createPeerConnectionClientFactory;
 import static com.piasy.kmp.webrtc.AndroidPeerConnectionClientFactoryKt.initializeWebRTC;
-import static com.piasy.kmp.webrtc.android.HallActivity.EXTRA_AUDIO_ONLY;
-import static com.piasy.kmp.webrtc.android.HallActivity.EXTRA_IS_PUBLISHER;
-import static com.piasy.kmp.webrtc.android.HallActivity.EXTRA_RECORD_CALL;
-import static com.piasy.kmp.webrtc.android.HallActivity.EXTRA_VIDEO_BITRATE;
-import static com.piasy.kmp.webrtc.android.HallActivity.EXTRA_VIDEO_CODEC;
-import static com.piasy.kmp.webrtc.android.HallActivity.EXTRA_VIDEO_FPS;
-import static com.piasy.kmp.webrtc.android.HallActivity.EXTRA_VIDEO_HEIGHT;
-import static com.piasy.kmp.webrtc.android.HallActivity.EXTRA_VIDEO_WIDTH;
+import static com.piasy.kmp.webrtc.android.HallActivity.*;
 
 public class CallActivity extends AppCompatActivity implements PeerConnectionClientCallback, AudioMixer.MixerCallback {
 
@@ -61,6 +55,7 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
   private static final boolean PAUSE_STREAMING = true;
 
   private boolean isPublisher;
+  private boolean singlePc;
   private boolean audioOnly;
   private int videoWidth;
   private int videoHeight;
@@ -87,6 +82,7 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
   private EglBase eglBase;
   private PeerConnectionClientFactory pcClientFactory;
   private PeerConnectionClient pcClient;
+  private PeerConnectionClient recvPcClient;
   private AudioMixer mixer;
 
   private static int getSystemUiVisibility() {
@@ -117,6 +113,7 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
 
     isPublisher = intent.getBooleanExtra(EXTRA_IS_PUBLISHER, true);
     recording = intent.getBooleanExtra(EXTRA_RECORD_CALL, false);
+    singlePc = intent.getBooleanExtra(EXTRA_SINGLE_PC, false);
     audioOnly = intent.getBooleanExtra(EXTRA_AUDIO_ONLY, false);
 
     videoWidth = intent.getIntExtra(EXTRA_VIDEO_WIDTH, 640);
@@ -300,11 +297,23 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
 
     // 5. create PcClient
     pcClient = pcClientFactory.createPeerConnectionClient(
-            "test", PeerConnectionClient.DIR_SEND_RECV, true, videoMaxBitrate, videoFps, this
+            "test",
+            singlePc ? PeerConnectionClient.DIR_SEND_RECV : PeerConnectionClient.DIR_SEND_ONLY,
+            true, videoMaxBitrate, videoFps, this
     );
+    if (!singlePc) {
+      recvPcClient = pcClientFactory.createPeerConnectionClient(
+              "test-recv",
+              PeerConnectionClient.DIR_RECV_ONLY,
+              true, videoMaxBitrate, videoFps, this
+      );
+    }
 
     // 6. create pc
     pcClient.createPeerConnection(Collections.emptyList());
+    if (recvPcClient != null) {
+      recvPcClient.createPeerConnection(Collections.emptyList());
+    }
 
     // 7. create offer
     pcClient.createOffer();
@@ -313,14 +322,28 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
   @Override
   public void onLocalDescription(@NotNull String peerUid, @NotNull SessionDescription sdp) {
     // 8. send offer to remote, get answer from remote, and set answer
-    SessionDescription answer = new SessionDescription(SessionDescription.ANSWER, sdp.getSdpDescription());
-    pcClient.setRemoteDescription(answer);
+    if (singlePc || TextUtils.equals(peerUid, "test-recv")) {
+      SessionDescription answer = new SessionDescription(SessionDescription.ANSWER, sdp.getSdpDescription());
+      pcClient.setRemoteDescription(answer);
+    } else if (TextUtils.equals(peerUid, "test")) {
+      SessionDescription offer = new SessionDescription(SessionDescription.OFFER, sdp.getSdpDescription());
+      recvPcClient.setRemoteDescription(offer);
+      recvPcClient.createAnswer();
+    }
+  }
+
+  @Override
+  public void onSetRemoteSdpResult(@NotNull String peerUid, boolean success) {
   }
 
   @Override
   public void onIceCandidate(@NotNull String peerUid, @NotNull IceCandidate candidate) {
     // 9. send ice candidate to remote, get ice candidate from remote, add ice candidate
-    pcClient.addIceCandidate(candidate);
+    if (singlePc || TextUtils.equals(peerUid, "test-recv")) {
+      pcClient.addIceCandidate(candidate);
+    } else if (TextUtils.equals(peerUid, "test")) {
+      recvPcClient.addIceCandidate(candidate);
+    }
   }
 
   @Override
@@ -329,7 +352,11 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
       @Override
       public void run() {
         // 10. on ice connected, add renderer for remote stream
-        pcClient.addRemoteTrackRenderer(remoteRenderer);
+        if (singlePc) {
+          pcClient.addRemoteTrackRenderer(remoteRenderer);
+        } else {
+          recvPcClient.addRemoteTrackRenderer(remoteRenderer);
+        }
       }
     });
   }
@@ -343,6 +370,10 @@ public class CallActivity extends AppCompatActivity implements PeerConnectionCli
     if (pcClientFactory != null) {
       pcClientFactory.stopVideoCapture();
       pcClient.close();
+      if (recvPcClient != null) {
+        recvPcClient.close();
+        recvPcClient = null;
+      }
       pcClientFactory.destroyPeerConnectionFactory();
       pcClientFactory = null;
       pcClient = null;
