@@ -10,7 +10,7 @@ plugins {
 version = Consts.releaseVersion
 group = Consts.releaseGroup
 
-val projectRoot = project.rootProject.projectDir
+val projectRoot: String = project.projectDir.parent
 
 kotlin {
     iosArm64()
